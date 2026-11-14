@@ -33,6 +33,8 @@ import TransferHub from "./pages/TransferHub";
 import PayNowTransfer from "./pages/PayNowTransfer";
 // import TransactionReview from "./pages/TransactionReview";
 import { usePaymentBehaviour } from "./context/PaymentBehaviourContext";
+import BankTransfer from "./pages/BankTransfer";
+import ManageRecipients from "./pages/ManageRecipients";
 
 // Demo-only route protection
 function DemoProtectedRoute() {
@@ -40,7 +42,6 @@ function DemoProtectedRoute() {
 
   return isLoggedIn ? <Outlet /> : <Navigate to="/login" replace />;
 }
-
 
 function BankingLayout() {
   const { recordPaymentClick } = usePaymentBehaviour();
@@ -67,7 +68,6 @@ function BankingLayout() {
   );
 }
 
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -84,6 +84,8 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/risk-test" element={<RiskTest />} />
             <Route path="/transfer/paynow" element={<PayNowTransfer />} />
+            <Route path="/transfer/bank" element={<BankTransfer />} />
+            <Route path="/transfer/recipients" element={<ManageRecipients />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/transfer" element={<TransferHub />} />
             <Route path="/transfer/ecommerce" element={<Transfer />} />
