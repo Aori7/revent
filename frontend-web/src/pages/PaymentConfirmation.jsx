@@ -87,7 +87,13 @@ export default function PaymentConfirmation() {
 
             <div className="flow-detail-row">
               <dt>Payment method</dt>
-              <dd>{isPayNow ? "PayNow" : "E-commerce Payment"}</dd>
+              <dd>
+                {draft.transferType === "paynow"
+                  ? "PayNow"
+                  : draft.transferType === "bank"
+                    ? "Bank Transfer"
+                    : "E-commerce Payment"}
+              </dd>
             </div>
           </dl>
 
@@ -192,7 +198,13 @@ export default function PaymentConfirmation() {
 
           <div className="flow-button-row">
             <Link
-              to={isPayNow ? "/transfer/paynow" : "/transfer/ecommerce"}
+              to={
+                draft.transferType === "paynow"
+                  ? "/transfer/paynow"
+                  : draft.transferType === "bank"
+                    ? "/transfer/bank"
+                    : "/transfer/ecommerce"
+              }
               className="flow-button"
             >
               Edit payment

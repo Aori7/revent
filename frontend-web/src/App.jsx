@@ -33,7 +33,7 @@ import TransferHub from "./pages/TransferHub";
 import PayNowTransfer from "./pages/PayNowTransfer";
 // import TransactionReview from "./pages/TransactionReview";
 import { usePaymentBehaviour } from "./context/PaymentBehaviourContext";
-
+import BankTransfer from "./pages/BankTransfer";
 // Demo-only route protection
 function DemoProtectedRoute() {
   const isLoggedIn = sessionStorage.getItem("reventDemoLogin") === "true";
@@ -84,6 +84,7 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/risk-test" element={<RiskTest />} />
             <Route path="/transfer/paynow" element={<PayNowTransfer />} />
+            <Route path="/transfer/bank" element={<BankTransfer />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/transfer" element={<TransferHub />} />
             <Route path="/transfer/ecommerce" element={<Transfer />} />
