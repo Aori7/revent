@@ -5,7 +5,7 @@ import {
   ChevronRight, CircleAlert, Flag, GraduationCap, Search, ShieldCheck,
   Sparkles, Video
 } from 'lucide-react';
-import EducationTopicCard from '../components/EducationTopicCard';
+import EducationTopicCard from '../components/education/educationTopicCard';
 import useDemoLearning from '../hooks/useDemoLearning';
 import {
   awarenessCategories, getAwarenessLevel, quickTips, scamTopics, topicCategories
@@ -126,7 +126,7 @@ function Education() {
               <div id="edu-saved-panel" className="edu-saved-panel">
                 {savedTopics.length ? (
                   <div className="edu-topic-grid">
-                    {savedTopics.map((topic) => <EducationTopicCard key={topic.id} topic={topic} saved completed={learning.completedIds.includes(topic.id)} onToggleSaved={toggleSaved}/>)}
+                    {savedTopics.map((topic) => <EducationTopicCard key={topic.id} topic={topic} saved completed={learning.completedIds.includes(topic.id)} completedCount={learning.completedStages?.[topic.id]?.length || 0} onToggleSaved={toggleSaved}/>)}
                   </div>
                 ) : <p className="edu-saved-empty">You haven't saved any cards yet. Use the bookmark icon on a learning card to keep it here.</p>}
               </div>
@@ -148,7 +148,7 @@ function Education() {
 
           {matchingTopics.length ? (
             <div className="edu-topic-grid">
-              {matchingTopics.map((topic) => <EducationTopicCard key={topic.id} topic={topic} saved={learning.savedIds.includes(topic.id)} completed={learning.completedIds.includes(topic.id)} onToggleSaved={toggleSaved}/>)}
+              {matchingTopics.map((topic) => <EducationTopicCard key={topic.id} topic={topic} saved={learning.savedIds.includes(topic.id)} completed={learning.completedIds.includes(topic.id)} completedCount={learning.completedStages?.[topic.id]?.length || 0} onToggleSaved={toggleSaved}/>)}
             </div>
           ) : (
             <div className="edu-empty-state"><Search size={28}/><h3>No guides found</h3><p>Try a different keyword or topic.</p><button type="button" onClick={() => { setQuery(''); setCategory('All topics'); }}>Clear filters</button></div>

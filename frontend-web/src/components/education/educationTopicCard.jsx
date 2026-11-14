@@ -2,8 +2,13 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, Bookmark, BookmarkCheck, CheckCircle2, Clock3 } from 'lucide-react';
 import { educationIcons } from './educationIcons';
 
-function EducationTopicCard({ topic, saved, completed, onToggleSaved }) {
-  const Icon = educationIcons[topic.icon] || educationIcons.landmark;
+function EducationTopicCard({
+  topic,
+  saved,
+  completed,
+  completedCount = 0,
+  onToggleSaved
+}) {  const Icon = educationIcons[topic.icon] || educationIcons.landmark;
 
   return (
     <article className="edu-topic-card">
@@ -23,11 +28,11 @@ function EducationTopicCard({ topic, saved, completed, onToggleSaved }) {
       <h3>{topic.title}</h3>
       <p>{topic.summary}</p>
       <div className="edu-topic-bottom">
-        <span className="edu-time"><Clock3 size={15} /> {topic.minutes} min read</span>
+        <span className="edu-time"><Clock3 size={15} /> 3 learning cards · {completedCount}/3 done</span>
         {completed && <span className="edu-completed"><CheckCircle2 size={15} /> Read</span>}
       </div>
       <Link className="edu-card-link" to={`/education/${topic.id}`}>
-        Read guide <ArrowUpRight size={17} />
+        {completedCount > 0 && completedCount < 3 ? "Continue learning" : completed ? "Review cards" : "Start learning"} <ArrowUpRight size={17} />
       </Link>
     </article>
   );

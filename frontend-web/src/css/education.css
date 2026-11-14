@@ -327,7 +327,7 @@
 .edu-filters { gap: 13px; }
 .edu-filters .edu-search { width: 100%; max-width: 470px; }
 
-/* ===== Learning Card Detail: front / red flags / completion screens from prototype ===== */
+/* ===== Learning Card Detail: front / red flags / completion screens ===== */
 .edu-lesson-page { padding-top: 25px; padding-bottom: 105px; background: #fafafb; }
 .edu-lesson-shell { max-width: 490px; }
 .edu-lesson-topbar { display: flex; min-height: 45px; align-items: center; }
@@ -425,4 +425,38 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .edu-lesson-progress > span, .edu-quick-arrow { transition: none !important; }
+}
+
+
+.edu-quick-grid { align-items: start; }
+.edu-quick-tip { align-self: start; height: auto; }
+
+/* Education v4: three sequential learning cards per scam topic. */
+.edu-lesson-stage-heading { margin: 12px 0 10px; font-size: 13px; font-weight: 800; color: #3b4350; }
+.edu-lesson-stage-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 0 0 18px; }
+.edu-lesson-stage-card { appearance: none; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 6px; padding: 12px; background: white; border: 1px solid #e4e6eb; border-radius: 12px; color: #414957; font-size: 12px; line-height: 1.3; }
+.edu-lesson-stage-card strong { color: #232630; font-size: 13px; }
+.edu-lesson-stage-card.active { border: 2px solid #cd1e32; background: #fff6f6; padding: 11px; }
+.edu-lesson-stage-card.done { border-color: #b8dfc9; background: #f2faf5; }
+.edu-lesson-stage-card:disabled { opacity: .58; cursor: not-allowed; background: #f4f5f7; }
+.edu-lesson-stage-card-top { display: flex; width: 100%; justify-content: space-between; align-items: center; color: #7b8490; }
+.edu-lesson-stage-card.done .edu-lesson-stage-card-top { color: #168052; }
+.edu-lesson-stage-meta { font-size: 11px; color: #7b8490; }
+.edu-lesson-stage-card.active .edu-lesson-stage-meta { color: #b62637; }
+.edu-lesson-quiz-note { margin: 5px 0 15px; font-size: 12px; color: #727b88; line-height: 1.45; }
+.edu-lesson-quiz-note strong { color: #4b5563; }
+.edu-lesson-milestone { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding: 42px 24px; background: white; border: 1px solid #e8e9ef; border-radius: 16px; }
+.edu-lesson-milestone > svg { color: #208451; }
+.edu-lesson-milestone h1 { font-size: 24px; margin: 0; }
+.edu-lesson-milestone p { font-size: 14px; line-height: 1.55; color: #697386; max-width: 330px; margin: 0 0 5px; }
+.edu-lesson-milestone .edu-primary-button { width: 100%; max-width: 355px; }
+.edu-lesson-milestone .edu-done-back { margin-top: 0; }
+.edu-lesson-milestone-score { font-size: 50px; font-weight: 650; color: #1c8655; line-height: 1; }
+.edu-awareness-back { margin-bottom: 21px; }
+@media (max-width: 540px) {
+  .edu-lesson-stage-grid { gap: 6px; }
+  .edu-lesson-stage-card { padding: 9px; font-size: 11px; }
+  .edu-lesson-stage-card.active { padding: 8px; }
+  .edu-lesson-stage-card strong { font-size: 12px; }
+  .edu-lesson-stage-meta { font-size: 10px; }
 }

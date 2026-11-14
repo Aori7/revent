@@ -9,8 +9,6 @@ function readStoredLearning() {
     const item = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (!item || !Array.isArray(item.savedIds) || !Array.isArray(item.completedIds)) return initial;
 
-    // Previously one finished guide meant one completed lesson. Treat that as
-    // the Beginner card rather than falsely showing the new 3-card path as 100%.
     const oldCards = Object.fromEntries(item.completedIds.map((id) => [id, ['Beginner']]));
     const completedStages = item.completedStages && typeof item.completedStages === 'object'
       ? item.completedStages : oldCards;

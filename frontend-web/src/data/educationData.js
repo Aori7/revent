@@ -246,8 +246,8 @@ export const quickTips = [
 
 /**
  * Front/back learning-card scenarios for the interactive detail page.
- * The current awareness level chooses the example, where an assessment exists.
- * It does NOT change when someone finishes reading a card.
+ * Each scam topic has three sequential learning cards: Beginner, Developing, Confident.
+ * Lesson completion is independent of the readiness/awareness score.
  */
 export const lessonScenarios = {
   'family-impersonation': {
@@ -298,6 +298,60 @@ export const lessonScenarios = {
     Developing: { scene: 'A voice message sounds just like your manager and asks you to pay a new supplier account immediately. They say to keep it confidential until their meeting ends.', redFlags: ['Voice presented as identity proof', 'Requests for secrecy', 'A last-minute change of account', 'Pressure to bypass approvals'], mediaLabel: 'Cloned manager voice' },
     Confident: { scene: 'You receive a convincing video call appearing to show your manager, who asks for a confidential urgent payment and refers to genuine project details.', redFlags: ['A convincing face and voice without independent verification', 'Unusual payment destination', 'Secrecy and unusual urgency', 'Instructions outside normal procedures'], mediaLabel: 'Unexpected manager video call' }
   },
+  'ecommerce-scam': {
+    heading: 'Online Shopping Scam',
+    Beginner: {
+      scene: 'You see a social media advertisement for a popular item at an unusually low price. The seller asks you to PayNow a personal account to reserve it.',
+      redFlags: ['A price far below other listings', 'Payment requested outside the marketplace', 'No verifiable seller history', 'Pressure to secure the deal quickly'],
+      mediaLabel: 'Suspicious online listing'
+    },
+    Developing: {
+      scene: 'A convincing shopping advertisement has polished product photos and many enthusiastic comments. The seller sends you a link to an external payment page and says buyer protection is unavailable for this offer.',
+      redFlags: ['AI-polished photos do not establish seller credibility', 'A payment link outside the trusted platform', 'Unverified reviews and testimonials', 'No clear refund or delivery protection'],
+      mediaLabel: 'Convincing product advertisement'
+    },
+    Confident: {
+      scene: 'A seller shares a realistic AI-generated promotional video of a public figure apparently endorsing an exclusive product launch. They request a bank transfer to a newly supplied account before stock runs out.',
+      redFlags: ['Celebrity-style video endorsement used as proof', 'Unusual urgency and limited-stock pressure', 'Direct bank transfer to a new recipient', 'No independent confirmation from a trusted retailer'],
+      mediaLabel: 'Synthetic product endorsement'
+    }
+  },
+  'job-scam': {
+    heading: 'Fake Job Offer',
+    Beginner: {
+      scene: 'An unfamiliar recruiter messages you about a simple online job with very high pay. They ask you to make a small deposit before starting.',
+      redFlags: ['Unsolicited offer with unusually high rewards', 'An upfront payment to start work', 'An unfamiliar recruiter', 'Little verifiable information about the employer'],
+      mediaLabel: 'Unexpected recruitment message'
+    },
+    Developing: {
+      scene: 'A polished AI-written email appears to come from a company recruiter. You complete small tasks and see a balance grow, but are told to top up your account to withdraw your wages.',
+      redFlags: ['Deposits required to withdraw earnings', 'A task balance that cannot be independently verified', 'Company details that do not match official channels', 'Repeated transfers to new accounts'],
+      mediaLabel: 'Convincing recruitment email'
+    },
+    Confident: {
+      scene: 'You receive a professional-looking video interview with a supposed hiring manager and an offer letter. They demand a same-day “verification fee” paid through a personal bank account before onboarding.',
+      redFlags: ['A video call used as sole proof of a real employer', 'A request for a fee before beginning work', 'Unusual personal payment details', 'An artificial deadline preventing independent checks'],
+      mediaLabel: 'Unexpected job video interview'
+    }
+  },
+  'investment-scam': {
+    heading: 'Investment Scam',
+    Beginner: {
+      scene: 'A stranger promises guaranteed investment profits every week and asks you to transfer money immediately to secure your place.',
+      redFlags: ['Guaranteed returns with little or no risk', 'Pressure to invest immediately', 'An unsolicited offer', 'Payment to an unfamiliar account'],
+      mediaLabel: 'Investment invitation'
+    },
+    Developing: {
+      scene: 'A realistic trading dashboard shows your supposed returns climbing. An online adviser says you must pay an extra tax or handling fee before withdrawing any of your funds.',
+      redFlags: ['Unverified gains on a private dashboard', 'Additional fees required to withdraw', 'A company or adviser that cannot be independently checked', 'Pressure to keep depositing'],
+      mediaLabel: 'Unverified trading dashboard'
+    },
+    Confident: {
+      scene: 'A convincing AI-generated video endorsement appears to feature a familiar personality promoting an exclusive investment. You are directed to transfer a large amount to a new account before the offer ends.',
+      redFlags: ['Synthetic endorsement presented as proof', 'Claims of guaranteed or unusually high returns', 'A new unverified payment recipient', 'Urgency that discourages independent research'],
+      mediaLabel: 'AI-generated investment promotion'
+    }
+  },
   deepfake: {
     heading: 'Deepfake Voice & Video',
     Beginner: { scene: 'A voice note seems to come from someone you know, asking for money. The voice sounds familiar but arrives from a new account.', redFlags: ['New or unfamiliar contact details', 'A voice clip as the only proof', 'An urgent request to send money', 'Avoiding an independent callback'], mediaLabel: 'Suspicious voice message' },
@@ -314,6 +368,7 @@ export const awarenessCategories = [
 
 /**
  * Demo-only readiness questions. Correct options should NOT be sent to React
+ * after real Supabase / Express integration: move grading into the backend.
  */
 export const readinessQuestions = [
   { id: 1, category: 'FAMILY', text: 'A new number says it belongs to your daughter and asks you to PayNow $500 urgently. What is the safest first step?', options: ['Transfer the money immediately', 'Call her usual number to verify', 'Ask the new number for its PayNow name', 'I am not sure'], correct: 1, feedback: 'Verify using an existing contact method before considering any payment.' },
