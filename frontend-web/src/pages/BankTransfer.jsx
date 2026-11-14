@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -47,11 +47,16 @@ function loadPayees() {
 
 export default function BankTransfer() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const requestedPayeeId = searchParams.get("payee");
+  const requestedMode = searchParams.get("mode");
   const { assess } = useTransactionRisk();
 
   const [payees, setPayees] = useState(loadPayees);
-  const [tab, setTab] = useState("saved");
-  const [selectedId, setSelectedId] = useState("");
+  const [tab, setTab] = useState(requestedMode === "new" ? "new" : "saved");
+
+  const [selectedId, setSelectedId] = useState(requestedPayeeId || "");
 
   const [bank, setBank] = useState("DBS / POSB");
   const [accountNumber, setAccountNumber] = useState("");
@@ -67,13 +72,9 @@ export default function BankTransfer() {
 
   const currentTime = Date.now() + demoOffset;
 
-  const selectedPayee = payees.find(
-    (payee) => payee.id === selectedId
-  );
+  const selectedPayee = payees.find((payee) => payee.id === selectedId);
 
-  const isPending =
-    selectedPayee &&
-    currentTime < selectedPayee.activatedAt;
+  const isPending = selectedPayee && currentTime < selectedPayee.activatedAt;
 
   function updatePayees(updated) {
     setPayees(updated);
@@ -104,9 +105,7 @@ export default function BankTransfer() {
     }
 
     const exists = payees.some(
-      (payee) =>
-        payee.bank === bank &&
-        payee.accountNumber === cleaned
+      (payee) => payee.bank === bank && payee.accountNumber === cleaned,
     );
 
     if (exists) {
@@ -131,7 +130,7 @@ export default function BankTransfer() {
     setTab("saved");
 
     setSuccess(
-      "Payee added successfully. A 12-hour cooling-off period is now in effect."
+      "Payee added successfully. A 12-hour cooling-off period is now in effect.",
     );
   }
 
@@ -145,9 +144,7 @@ export default function BankTransfer() {
     }
 
     if (currentTime < selectedPayee.activatedAt) {
-      setError(
-        "This payee is still within the 12-hour cooling-off period."
-      );
+      setError("This payee is still within the 12-hour cooling-off period.");
       return;
     }
 
@@ -159,9 +156,7 @@ export default function BankTransfer() {
       !/^\d+(\.\d{1,2})?$/.test(amount) ||
       value > demoAccount.balance
     ) {
-      setError(
-        "Enter a valid amount within your available balance."
-      );
+      setError("Enter a valid amount within your available balance.");
       return;
     }
 
@@ -220,18 +215,14 @@ export default function BankTransfer() {
 
             <div>
               <h2>Who are you paying?</h2>
-              <p>
-                Choose a saved recipient or add someone new.
-              </p>
+              <p>Choose a saved recipient or add someone new.</p>
             </div>
           </div>
 
           <div className="bank-tabs">
             <button
               type="button"
-              className={`bank-tab ${
-                tab === "saved" ? "active" : ""
-              }`}
+              className={`bank-tab ${tab === "saved" ? "active" : ""}`}
               onClick={() => changeTab("saved")}
             >
               <UserRound size={17} />
@@ -240,9 +231,7 @@ export default function BankTransfer() {
 
             <button
               type="button"
-              className={`bank-tab ${
-                tab === "new" ? "active" : ""
-              }`}
+              className={`bank-tab ${tab === "new" ? "active" : ""}`}
               onClick={() => changeTab("new")}
             >
               <Plus size={18} />
@@ -259,19 +248,15 @@ export default function BankTransfer() {
 
               <div className="bank-payee-list">
                 {payees.map((payee) => {
-                  const pending =
-                    currentTime < payee.activatedAt;
+                  const pending = currentTime < payee.activatedAt;
 
-                  const selected =
-                    selectedId === payee.id;
+                  const selected = selectedId === payee.id;
 
                   return (
                     <button
                       key={payee.id}
                       type="button"
-                      className={`bank-payee ${
-                        selected ? "selected" : ""
-                      }`}
+                      className={`bank-payee ${selected ? "selected" : ""}`}
                       onClick={() => {
                         setSelectedId(payee.id);
                         setError("");
@@ -286,8 +271,7 @@ export default function BankTransfer() {
                         <strong>{payee.name}</strong>
 
                         <span>
-                          {payee.bank} · ••••{" "}
-                          {payee.accountNumber.slice(-4)}
+                          {payee.bank} · •••• {payee.accountNumber.slice(-4)}
                         </span>
 
                         <span
@@ -301,16 +285,12 @@ export default function BankTransfer() {
                             <CheckCircle2 size={13} />
                           )}
 
-                          {pending
-                            ? "Pending activation"
-                            : "Active payee"}
+                          {pending ? "Pending activation" : "Active payee"}
                         </span>
                       </div>
 
                       <span
-                        className={`bank-radio ${
-                          selected ? "checked" : ""
-                        }`}
+                        className={`bank-radio ${selected ? "checked" : ""}`}
                       >
                         {selected && <span />}
                       </span>
@@ -324,20 +304,18 @@ export default function BankTransfer() {
                   <Clock3 size={21} />
 
                   <div>
-                    <strong>
-                      12-hour cooling-off period
-                    </strong>
+                    <strong>12-hour cooling-off period</strong>
 
                     <p>
-                      Transfers to this newly added payee
-                      are temporarily unavailable.
+                      Transfers to this newly added payee are temporarily
+                      unavailable.
                     </p>
 
                     <p className="bank-activation-date">
                       Available from:{" "}
-                      {new Date(
-                        selectedPayee.activatedAt
-                      ).toLocaleString("en-SG")}
+                      {new Date(selectedPayee.activatedAt).toLocaleString(
+                        "en-SG",
+                      )}
                     </p>
                   </div>
                 </div>
@@ -350,9 +328,7 @@ export default function BankTransfer() {
               </div>
 
               <div className="bank-field">
-                <label htmlFor="bank-amount">
-                  Amount (SGD)
-                </label>
+                <label htmlFor="bank-amount">Amount (SGD)</label>
 
                 <div className="bank-amount-input">
                   <span>S$</span>
@@ -364,9 +340,7 @@ export default function BankTransfer() {
                     step="0.01"
                     placeholder="0.00"
                     value={amount}
-                    onChange={(event) =>
-                      setAmount(event.target.value)
-                    }
+                    onChange={(event) => setAmount(event.target.value)}
                     required
                   />
                 </div>
@@ -375,9 +349,7 @@ export default function BankTransfer() {
               <div className="bank-field">
                 <label htmlFor="bank-reference">
                   Payment reference
-                  <span className="bank-optional">
-                    Optional
-                  </span>
+                  <span className="bank-optional">Optional</span>
                 </label>
 
                 <input
@@ -385,9 +357,7 @@ export default function BankTransfer() {
                   type="text"
                   placeholder="What's this payment for?"
                   value={reference}
-                  onChange={(event) =>
-                    setReference(event.target.value)
-                  }
+                  onChange={(event) => setReference(event.target.value)}
                   maxLength={120}
                 />
               </div>
@@ -396,8 +366,8 @@ export default function BankTransfer() {
                 <ShieldCheck size={19} />
 
                 <p>
-                  REVENT assesses your transaction for
-                  potential scam indicators before payment.
+                  REVENT assesses your transaction for potential scam indicators
+                  before payment.
                 </p>
               </div>
 
@@ -417,17 +387,13 @@ export default function BankTransfer() {
               </div>
 
               <div className="bank-field">
-                <label htmlFor="bank-name">
-                  Recipient's bank
-                </label>
+                <label htmlFor="bank-name">Recipient's bank</label>
 
                 <div className="bank-select-wrapper">
                   <select
                     id="bank-name"
                     value={bank}
-                    onChange={(event) =>
-                      setBank(event.target.value)
-                    }
+                    onChange={(event) => setBank(event.target.value)}
                     required
                   >
                     <option>DBS / POSB</option>
@@ -443,9 +409,7 @@ export default function BankTransfer() {
               </div>
 
               <div className="bank-field">
-                <label htmlFor="bank-account">
-                  Bank account number
-                </label>
+                <label htmlFor="bank-account">Bank account number</label>
 
                 <input
                   id="bank-account"
@@ -453,27 +417,21 @@ export default function BankTransfer() {
                   inputMode="numeric"
                   placeholder="Enter account number"
                   value={accountNumber}
-                  onChange={(event) =>
-                    setAccountNumber(event.target.value)
-                  }
+                  onChange={(event) => setAccountNumber(event.target.value)}
                   maxLength={20}
                   required
                 />
               </div>
 
               <div className="bank-field">
-                <label htmlFor="bank-recipient">
-                  Recipient's name
-                </label>
+                <label htmlFor="bank-recipient">Recipient's name</label>
 
                 <input
                   id="bank-recipient"
                   type="text"
                   placeholder="Name of account holder"
                   value={recipientName}
-                  onChange={(event) =>
-                    setRecipientName(event.target.value)
-                  }
+                  onChange={(event) => setRecipientName(event.target.value)}
                   required
                 />
               </div>
@@ -482,22 +440,16 @@ export default function BankTransfer() {
                 <Clock3 size={22} />
 
                 <div>
-                  <strong>
-                    12-hour cooling-off period
-                  </strong>
+                  <strong>12-hour cooling-off period</strong>
 
                   <p>
-                    For your security, newly added payees
-                    must complete a 12-hour activation
-                    period before transfers are allowed.
+                    For your security, newly added payees must complete a
+                    12-hour activation period before transfers are allowed.
                   </p>
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="bank-primary-btn"
-              >
+              <button type="submit" className="bank-primary-btn">
                 Add Payee
                 <Plus size={19} />
               </button>
@@ -528,8 +480,8 @@ export default function BankTransfer() {
 
           <div className="bank-demo-content">
             <p>
-              Simulate the passage of 12 hours to test
-              payee activation. No device clock is changed.
+              Simulate the passage of 12 hours to test payee activation. No
+              device clock is changed.
             </p>
 
             <button
@@ -548,8 +500,8 @@ export default function BankTransfer() {
         </details>
 
         <p className="bank-disclaimer">
-          Demo only. No real bank accounts are verified
-          and no money is transferred.
+          Demo only. No real bank accounts are verified and no money is
+          transferred.
         </p>
       </div>
     </main>
