@@ -37,6 +37,7 @@ import BankTransfer from "./pages/BankTransfer";
 import ManageRecipients from "./pages/ManageRecipients";
 import PayNowHome from "./pages/PayNowHome";
 import ScanAndPay from "./pages/ScanAndPay";
+import ScheduledTransfer from "./pages/ScheduledTransfer";
 // Demo-only route protection
 function DemoProtectedRoute() {
   const isLoggedIn = sessionStorage.getItem("reventDemoLogin") === "true";
@@ -89,6 +90,7 @@ export default function App() {
             <Route path="/transfer/bank" element={<BankTransfer />} />
             <Route path="/transfer/recipients" element={<ManageRecipients />} />
             <Route path="/transfer/scan" element={<ScanAndPay />} />
+            <Route path="/transfer/scheduled" element={<ScheduledTransfer />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/transfer" element={<TransferHub />} />
             <Route path="/transfer/ecommerce" element={<Transfer />} />
