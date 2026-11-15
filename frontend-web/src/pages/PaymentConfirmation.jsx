@@ -92,7 +92,9 @@ export default function PaymentConfirmation() {
                   ? "PayNow"
                   : draft.transferType === "bank"
                     ? "Bank Transfer"
-                    : "E-commerce Payment"}
+                    : draft.transferType === "scanpay"
+                      ? "Scan & Pay"
+                      : "E-commerce Payment"}
               </dd>
             </div>
           </dl>
@@ -200,10 +202,12 @@ export default function PaymentConfirmation() {
             <Link
               to={
                 draft.transferType === "paynow"
-                  ? "/transfer/paynow"
+                  ? "/transfer/paynow/send"
                   : draft.transferType === "bank"
                     ? "/transfer/bank"
-                    : "/transfer/ecommerce"
+                    : draft.transferType === "scanpay"
+                      ? "/transfer/scan"
+                      : "/transfer/ecommerce"
               }
               className="flow-button"
             >

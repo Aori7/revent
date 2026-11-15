@@ -1,0 +1,376 @@
+
+.paynow-home-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  padding-bottom: 100px;
+}
+
+.paynow-home-container {
+  width: min(100% - 32px, 760px);
+  margin: 0 auto;
+  padding-top: 28px;
+}
+
+.paynow-home-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 24px;
+  color: #d6001c;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.paynow-home-back:hover {
+  text-decoration: underline;
+}
+
+.paynow-home-panel {
+  padding: 30px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 18px;
+  box-shadow: 0 5px 22px rgba(20, 28, 44, 0.035);
+}
+
+.paynow-home-heading {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 26px;
+}
+
+.paynow-home-heading-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  background: #fff0f2;
+  color: #d6001c;
+  border-radius: 14px;
+}
+
+.paynow-home-heading h2 {
+  margin: 0 0 5px;
+  color: #202838;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.paynow-home-heading p {
+  margin: 0;
+  color: #7b8492;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.paynow-home-search {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 16px;
+  margin-bottom: 22px;
+  border: 1.5px solid #dce1e8;
+  border-radius: 11px;
+  color: #8992a0;
+}
+
+.paynow-home-search:focus-within {
+  border-color: #d6001c;
+}
+
+.paynow-home-search input {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  color: #263041;
+}
+
+.paynow-home-search input::placeholder {
+  color: #a1a8b3;
+}
+
+.paynow-home-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 5px;
+  margin-bottom: 26px;
+  background: #f2f3f6;
+  border-radius: 12px;
+}
+
+.paynow-home-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #737d8d;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.paynow-home-tab.active {
+  background: #fff;
+  color: #d6001c;
+  box-shadow: 0 2px 7px rgba(20, 28, 44, 0.08);
+}
+
+.paynow-home-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.paynow-home-section-heading h3 {
+  margin: 0;
+  color: #252d3b;
+  font-size: 17px;
+}
+
+.paynow-home-section-heading span {
+  color: #929aa7;
+  font-size: 13px;
+}
+
+.paynow-home-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.paynow-home-recipient {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 17px;
+  border: 1.5px solid #e3e6eb;
+  border-radius: 13px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.paynow-home-recipient:hover {
+  border-color: #d6001c;
+  background: #fffafa;
+}
+
+.paynow-home-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f2f3f6;
+  color: #596273;
+}
+
+.paynow-home-recipient-info {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.paynow-home-recipient-info strong {
+  color: #242c39;
+  font-size: 15px;
+}
+
+.paynow-home-recipient-info span {
+  color: #7e8795;
+  font-size: 13px;
+}
+
+.paynow-home-recipient > svg {
+  color: #a1a8b3;
+}
+
+.paynow-home-empty {
+  padding: 35px 15px;
+  text-align: center;
+  color: #9aa3b0;
+}
+
+.paynow-home-empty svg {
+  margin-bottom: 10px;
+}
+
+.paynow-home-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.paynow-home-divider {
+  height: 1px;
+  margin: 28px 0;
+  background: #e9ebef;
+}
+
+.paynow-home-new {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 17px;
+  border: 1.5px solid #f0cbd1;
+  border-radius: 13px;
+  background: #fff9fa;
+  text-align: left;
+  cursor: pointer;
+}
+
+.paynow-home-new:hover {
+  border-color: #d6001c;
+}
+
+.paynow-home-new-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #ffe8ec;
+  color: #d6001c;
+}
+
+.paynow-home-new > div:nth-child(2) {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.paynow-home-new strong {
+  color: #242c39;
+  font-size: 15px;
+}
+
+.paynow-home-new span {
+  color: #7e8795;
+  font-size: 13px;
+}
+
+.paynow-home-new > svg {
+  flex-shrink: 0;
+  color: #d6001c;
+}
+
+.paynow-home-security {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 25px;
+  padding: 17px;
+  background: #f3f8f6;
+  border-radius: 12px;
+  color: #328466;
+}
+
+.paynow-home-security svg {
+  flex-shrink: 0;
+}
+
+.paynow-home-security p {
+  margin: 0;
+  color: #5b756a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.paynow-home-disclaimer {
+  margin: 24px auto;
+  color: #929aa7;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* Mobile layout */
+
+@media (max-width: 600px) {
+  .paynow-home-container {
+    width: calc(100% - 24px);
+    padding-top: 22px;
+  }
+
+  .paynow-home-panel {
+    padding: 20px;
+    border-radius: 15px;
+  }
+
+  .paynow-home-heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .paynow-home-heading-icon {
+    width: 43px;
+    height: 43px;
+  }
+
+  .paynow-home-heading h2 {
+    font-size: 19px;
+  }
+
+  .paynow-home-heading p {
+    font-size: 12px;
+  }
+
+  .paynow-home-tab {
+    font-size: 13px;
+    padding: 12px;
+  }
+
+  .paynow-home-recipient {
+    padding: 14px;
+    gap: 11px;
+  }
+
+  .paynow-home-avatar,
+  .paynow-home-new-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .paynow-home-recipient-info strong,
+  .paynow-home-new strong {
+    font-size: 14px;
+  }
+
+  .paynow-home-recipient-info span,
+  .paynow-home-new span {
+    font-size: 12px;
+  }
+
+  .paynow-home-new {
+    padding: 14px;
+    gap: 11px;
+  }
+
+  .paynow-home-search input {
+    font-size: 16px;
+  }
+}
