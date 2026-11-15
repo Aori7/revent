@@ -35,7 +35,7 @@ import PayNowTransfer from "./pages/PayNowTransfer";
 import { usePaymentBehaviour } from "./context/PaymentBehaviourContext";
 import BankTransfer from "./pages/BankTransfer";
 import ManageRecipients from "./pages/ManageRecipients";
-
+import PayNowHome from "./pages/PayNowHome";
 // Demo-only route protection
 function DemoProtectedRoute() {
   const isLoggedIn = sessionStorage.getItem("reventDemoLogin") === "true";
@@ -83,7 +83,8 @@ export default function App() {
           <Route element={<BankingLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/risk-test" element={<RiskTest />} />
-            <Route path="/transfer/paynow" element={<PayNowTransfer />} />
+            <Route path="/transfer/paynow" element={<PayNowHome />} />
+            <Route path="/transfer/paynow/send" element={<PayNowTransfer />} />
             <Route path="/transfer/bank" element={<BankTransfer />} />
             <Route path="/transfer/recipients" element={<ManageRecipients />} />
             <Route path="/accounts" element={<Accounts />} />

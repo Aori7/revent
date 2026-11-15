@@ -200,7 +200,7 @@ export default function PaymentConfirmation() {
             <Link
               to={
                 draft.transferType === "paynow"
-                  ? "/transfer/paynow"
+                  ? "/transfer/paynow/send"
                   : draft.transferType === "bank"
                     ? "/transfer/bank"
                     : "/transfer/ecommerce"
