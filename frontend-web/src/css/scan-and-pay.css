@@ -1,0 +1,626 @@
+.scanpay-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  padding-bottom: 100px;
+}
+
+.scanpay-container {
+  width: min(100% - 32px, 760px);
+  margin: 0 auto;
+  padding-top: 28px;
+}
+
+.scanpay-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 24px;
+  color: #d6001c;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scanpay-back:hover {
+  text-decoration: underline;
+}
+
+.scanpay-panel {
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 18px;
+  padding: 30px;
+  box-shadow: 0 5px 22px rgba(20, 28, 44, 0.035);
+}
+
+.scanpay-heading {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 26px;
+}
+
+.scanpay-heading-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: #fff0f2;
+  color: #d6001c;
+}
+
+.scanpay-heading h2 {
+  margin: 0 0 5px;
+  font-size: 23px;
+  color: #202838;
+}
+
+.scanpay-heading p {
+  margin: 0;
+  font-size: 14px;
+  color: #7b8492;
+  line-height: 1.5;
+}
+
+/* Camera */
+
+.scanpay-camera {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  overflow: hidden;
+  background: #151b25;
+  border-radius: 16px;
+}
+
+.scanpay-video {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanpay-video.visible {
+  display: block;
+}
+
+.scanpay-camera-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  padding: 24px;
+  color: #c4ccd8;
+  text-align: center;
+}
+
+.scanpay-camera-placeholder > svg {
+  color: #8996a8;
+}
+
+.scanpay-camera-placeholder strong {
+  font-size: 17px;
+  color: #fff;
+}
+
+.scanpay-camera-placeholder span {
+  max-width: 230px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Scanning frame */
+
+.scanpay-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(66%, 250px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.scanpay-corner {
+  position: absolute;
+  width: 37px;
+  height: 37px;
+  border-color: #ff4b62;
+  border-style: solid;
+  border-width: 0;
+}
+
+.scanpay-corner.tl {
+  top: 0;
+  left: 0;
+  border-top-width: 5px;
+  border-left-width: 5px;
+  border-top-left-radius: 13px;
+}
+
+.scanpay-corner.tr {
+  top: 0;
+  right: 0;
+  border-top-width: 5px;
+  border-right-width: 5px;
+  border-top-right-radius: 13px;
+}
+
+.scanpay-corner.bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 5px;
+  border-left-width: 5px;
+  border-bottom-left-radius: 13px;
+}
+
+.scanpay-corner.br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 5px;
+  border-right-width: 5px;
+  border-bottom-right-radius: 13px;
+}
+
+.scanpay-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  background: #ff4b62;
+  box-shadow: 0 0 15px rgba(255, 75, 98, 0.9);
+  animation: scanpay-sweep 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes scanpay-sweep {
+  from {
+    top: 12%;
+  }
+
+  to {
+    top: 88%;
+  }
+}
+
+.scanpay-camera-label {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  transform: translateX(-50%);
+  border-radius: 30px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.scanpay-camera-message {
+  margin: 13px 0 0;
+  color: #667589;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.scanpay-camera-actions {
+  margin-top: 18px;
+}
+
+.scanpay-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 11px;
+  background: #e60023;
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.scanpay-primary:hover:not(:disabled) {
+  background: #c9001d;
+}
+
+.scanpay-primary:disabled {
+  background: #e2e5ea;
+  color: #8a93a1;
+  cursor: not-allowed;
+}
+
+.scanpay-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 52px;
+  border: 1px solid #dce1e8;
+  border-radius: 11px;
+  background: #fff;
+  color: #303849;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.scanpay-secondary:hover {
+  background: #f7f8fa;
+}
+
+.scanpay-divider {
+  height: 1px;
+  margin: 28px 0;
+  background: #e9ebef;
+}
+
+/* Demo options */
+
+.scanpay-demo {
+  padding: 19px;
+  border: 1px solid #e3e6eb;
+  border-radius: 13px;
+  background: #fafbfc;
+}
+
+.scanpay-demo summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #303849;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scanpay-demo summary::-webkit-details-marker {
+  display: none;
+}
+
+.scanpay-demo summary svg {
+  color: #d6001c;
+}
+
+.scanpay-demo > p {
+  margin: 13px 0 17px;
+  color: #7e8795;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.scanpay-demo-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.scanpay-demo-options button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #e3e6eb;
+  border-radius: 11px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.scanpay-demo-options button:hover {
+  border-color: #d6001c;
+  background: #fffafa;
+}
+
+.scanpay-demo-options button > svg:first-child {
+  flex-shrink: 0;
+  color: #d6001c;
+}
+
+.scanpay-demo-options button > svg:last-child {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: #9aa3b0;
+}
+
+.scanpay-demo-options button span {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.scanpay-demo-options button strong {
+  font-size: 13px;
+  color: #303849;
+}
+
+.scanpay-demo-options button small {
+  font-size: 12px;
+  color: #8a93a1;
+}
+
+/* Recipient details */
+
+.scanpay-success-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 17px;
+  color: #24845d;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scanpay-recipient {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 21px;
+  margin-bottom: 25px;
+  border: 1px solid #e3e6eb;
+  border-radius: 14px;
+  background: #fafbfc;
+}
+
+.scanpay-recipient-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #fff0f2;
+  color: #d6001c;
+}
+
+.scanpay-recipient > div:last-child > span {
+  color: #929aa7;
+  font-size: 12px;
+}
+
+.scanpay-recipient h3 {
+  margin: 5px 0;
+  color: #252d3b;
+  font-size: 19px;
+}
+
+.scanpay-recipient p {
+  margin: 0;
+  color: #7e8795;
+  font-size: 13px;
+}
+
+/* Warning */
+
+.scanpay-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 17px;
+  margin-bottom: 23px;
+  border: 1px solid #f4e5c6;
+  border-radius: 12px;
+  background: #fff9ed;
+  color: #a16c19;
+}
+
+.scanpay-warning > svg {
+  flex-shrink: 0;
+}
+
+.scanpay-warning p {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.scanpay-warning strong {
+  color: #77521a;
+}
+
+.scanpay-warning span {
+  color: #846d4a;
+}
+
+/* Payment fields */
+
+.scanpay-field {
+  margin-bottom: 22px;
+}
+
+.scanpay-field label {
+  display: block;
+  margin-bottom: 10px;
+  color: #303849;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scanpay-field > input,
+.scanpay-amount {
+  width: 100%;
+  min-height: 54px;
+  box-sizing: border-box;
+  border: 1.5px solid #dce1e8;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.scanpay-field > input {
+  padding: 13px 15px;
+  color: #263041;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.scanpay-field > input:focus,
+.scanpay-amount:focus-within {
+  border-color: #d6001c;
+  box-shadow: 0 0 0 3px rgba(214, 0, 28, 0.08);
+}
+
+.scanpay-amount {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.scanpay-amount > span {
+  padding-left: 17px;
+  color: #303849;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.scanpay-amount input {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  padding: 13px 10px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #263041;
+  font: inherit;
+  font-size: 16px;
+}
+
+.scanpay-security {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 25px 0 20px;
+  color: #328466;
+}
+
+.scanpay-security svg {
+  flex-shrink: 0;
+}
+
+.scanpay-security p {
+  margin: 0;
+  color: #667589;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.scanpay-error {
+  padding: 13px 15px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  background: #fff0f1;
+  color: #bd2637;
+  font-size: 13px;
+}
+
+.scanpay-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  border: none;
+  background: transparent;
+  color: #687384;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.scanpay-reset:hover {
+  color: #d6001c;
+}
+
+.scanpay-disclaimer {
+  margin: 24px auto;
+  color: #929aa7;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .scanpay-container {
+    width: calc(100% - 24px);
+    padding-top: 22px;
+  }
+
+  .scanpay-panel {
+    padding: 20px;
+    border-radius: 15px;
+  }
+
+  .scanpay-heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .scanpay-heading-icon {
+    width: 43px;
+    height: 43px;
+  }
+
+  .scanpay-heading h2 {
+    font-size: 19px;
+  }
+
+  .scanpay-heading p {
+    font-size: 12px;
+  }
+
+  .scanpay-camera {
+    height: 320px;
+  }
+
+  .scanpay-demo-options {
+    grid-template-columns: 1fr;
+  }
+
+  .scanpay-recipient {
+    padding: 15px;
+  }
+
+  .scanpay-recipient-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .scanpay-field > input,
+  .scanpay-amount input {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scanpay-line {
+    animation: none;
+    top: 50%;
+  }
+}
