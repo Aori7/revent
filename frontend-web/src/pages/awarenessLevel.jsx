@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, CheckCircle2, ChevronRight, GraduationCap, Info, RotateCcw, ShieldCheck, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, ChevronRight, GraduationCap, Info, RotateCcw, ShieldCheck, TrendingUp } from 'lucide-react';
 import useDemoLearning from '../hooks/useDemoLearning';
 import { awarenessCategories, getAwarenessLevel, scamTopics } from '../data/educationData';
 import '../css/education.css';
@@ -16,6 +16,7 @@ function Awareness() {
   return (
     <main className="edu-page">
       <div className="edu-container">
+        <Link to="/education" className="edu-back-link edu-awareness-back"><ArrowLeft size={18}/> Back to Scam Education</Link>
         <div className="edu-page-heading">
           <span className="edu-eyebrow"><ShieldCheck size={17}/> YOUR LEARNING JOURNEY</span>
           <h1>Scam Awareness</h1>
@@ -29,7 +30,7 @@ function Awareness() {
             <Link to="/readiness" className="edu-primary-button"><GraduationCap size={19}/>{result ? 'Retake readiness check' : 'Take readiness check'}<ArrowRight size={18}/></Link>
           </div>
           <div className="edu-awareness-metrics">
-            <div><span>Guides read</span><strong>{completeCount}<small> / {scamTopics.length}</small></strong><BookOpen size={22}/></div>
+            <div><span>Learning paths completed</span><strong>{completeCount}<small> / {scamTopics.length}</small></strong><BookOpen size={22}/></div>
             <div><span>Last readiness score</span><strong>{result ? `${result.totalCorrect}/9` : '—'}</strong><TrendingUp size={22}/></div>
             <div><span>Categories assessed</span><strong>{result ? '3/3' : '0/3'}</strong><CheckCircle2 size={22}/></div>
           </div>
@@ -46,7 +47,7 @@ function Awareness() {
               <p>{item.description}</p>
               <div className="edu-level-score"><strong>{item.percent == null ? 'Not assessed' : `${item.percent}%`}</strong><span>{item.percent == null ? 'Take the check to get your score' : 'Latest category score'}</span></div>
               <div className="edu-progress-track" aria-label={`${item.title}: ${item.percent ?? 0}%`} role="progressbar" aria-valuenow={item.percent ?? 0} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${item.percent ?? 0}%` }}/></div>
-              <Link to={`/education/${item.topicId}`}>Explore learning guide <ChevronRight size={18}/></Link>
+              <Link to={`/education/${item.topicId}`}>Explore learning cards <ChevronRight size={18}/></Link>
             </article>
           ))}
         </div>
