@@ -44,22 +44,6 @@
     letter-spacing: 1px;
 }
 
-/* Everyday Banking */
-
-.banking-actions {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 15px;
-}
-
-.banking-actions button {
-    background: #f7f8fa;
-    border: none;
-    padding: 15px;
-    border-radius: 10px;
-    cursor: pointer;
-}
-
 /* Main Layout */
 .dashboard-grid {
     display: grid;
@@ -92,15 +76,87 @@
 .dashboard-rewards {
     grid-area: rewards;
 }
+/* Redesigned dashboard header */
 
+.dashboard-top {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  margin-bottom: 26px;
+}
+
+.dashboard-greeting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.dashboard-greeting h1 {
+  margin: 0 0 8px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #171b24;
+}
+
+.dashboard-greeting p {
+  margin: 0;
+  font-size: 16px;
+  color: #747b87;
+}
+
+.dashboard-update {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 9px;
+}
+
+.dashboard-current-date {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.dashboard-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.dashboard-quick-actions {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .dashboard-greeting {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .dashboard-greeting h1 {
+    font-size: 25px;
+  }
+
+  .dashboard-update {
+    align-items: flex-start;
+  }
+
+  .dashboard-top {
+    gap: 20px;
+  }
+}
 /* Responsive */
 @media (max-width: 900px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
 
         grid-template-areas:
-            "account"
             "cards"
+            "account"
             "transactions"
             "security"
             "rewards";
@@ -119,5 +175,35 @@
 
     .banking-actions {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 600px) {
+    .banking-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .banking-actions button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        min-height: 88px;
+        padding: 12px 8px;
+        border-radius: 10px;
+    }
+
+    .banking-actions button svg {
+        width: 23px;
+        height: 23px;
+        flex-shrink: 0;
+    }
+
+    .banking-actions button p,
+    .banking-actions button small {
+        display: none;
     }
 }
