@@ -10,13 +10,28 @@ import {
   Bot,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { logoutCustomer } from '../services/authApi';
 
 function Navbar() {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("reventDemoLogin");
-    navigate("/login", { replace: true });
+  const handleLogout = async () => {
+      const token = sessionStorage.getItem('reventAccessToken');
+
+      try {
+          if (token) {
+              await logoutCustomer(token);
+          }
+      } catch (error) {
+          console.error('Logout failed:', error.message);
+      } finally {
+          // Remove the customer's stored login session
+          sessionStorage.removeItem('reventAccessToken');
+          sessionStorage.removeItem('reventDemoLogin');
+
+          // Redirect to Login page
+          navigate('/login', { replace: true });
+      }
   };
   return (
     <header className="navbar">

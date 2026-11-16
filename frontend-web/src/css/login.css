@@ -189,3 +189,56 @@
         font-size: 12px;
     }
 }
+
+/* Sign Up Page */
+.signup-page {
+    padding-top: 30px;
+    padding-bottom: 75px;
+}
+
+.signup-page .login-card {
+    padding: 30px 40px;
+}
+
+.signup-page .login-card h1 {
+    margin-bottom: 20px;
+}
+
+.signup-page .login-card input {
+    margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+    .signup-page .login-card {
+        padding: 24px;
+    }
+}
+
+/* Sign Up Page - Log In Link */
+.signup-page .login-register a {
+    color: #ff1e1e;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.signup-page .login-register a:hover {
+    color: #ff1e1e;
+}
+
+/* Sign up now link on Login page */
+.login-page:not(.signup-page) .login-register a {
+    color: #ff1e1e;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.login-page:not(.signup-page) .login-register a:hover {
+    color: #ff1e1e;
+}
+
+.signup-page .signup-success {
+    color: #167a3e;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 12px;
+}
