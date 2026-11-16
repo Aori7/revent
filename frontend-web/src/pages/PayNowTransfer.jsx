@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,7 +10,6 @@ import {
 
 import PageBanner from "../components/PageBanner";
 import "../css/paynow-transfer.css";
-import { useNavigate } from "react-router-dom";
 import useTransactionRisk from "../hooks/useTransactionRisk";
 import { saveRiskAssessment } from "../utils/riskSession";
 import { saveDraft } from "../utils/demoSession";
@@ -30,7 +29,9 @@ const demoRecipients = {
 };
 
 export default function PayNowTransfer() {
-  const [mobile, setMobile] = useState("");
+  const [searchParams] = useSearchParams();
+
+  const [mobile, setMobile] = useState(searchParams.get("mobile") || "");
   const [recipient, setRecipient] = useState(null);
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
@@ -38,6 +39,24 @@ export default function PayNowTransfer() {
   const navigate = useNavigate();
   const { assess } = useTransactionRisk();
   const { recordPaymentClick } = usePaymentBehaviour();
+  useEffect(() => {
+    const selectedMobile = searchParams.get("mobile");
+
+    if (!selectedMobile) return;
+
+    const found = demoRecipients[selectedMobile];
+
+    if (found) {
+      setMobile(selectedMobile);
+
+      setRecipient({
+        ...found,
+        mobile: selectedMobile,
+      });
+
+      setError("");
+    }
+  }, [searchParams]);
   function lookupRecipient() {
     const cleaned = mobile.replace(/\D/g, "");
 
@@ -126,9 +145,9 @@ export default function PayNowTransfer() {
       />
 
       <div className="paynow-container">
-        <Link to="/transfer" className="paynow-back">
+        <Link to="/transfer/paynow" className="paynow-back">
           <ArrowLeft size={18} />
-          Back to Transfer & Pay
+          Back to PayNow
         </Link>
 
         <form className="paynow-card" onSubmit={submit}>

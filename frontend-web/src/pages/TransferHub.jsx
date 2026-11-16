@@ -29,7 +29,7 @@ const transferOptions = [
     title: "Scan & Pay",
     description: "Make payments using a QR code.",
     icon: QrCode,
-    path: "/transfer/qr",
+    path:  "/transfer/scan",
   },
   {
     title: "Scheduled Transfer",

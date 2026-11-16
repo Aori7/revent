@@ -1,0 +1,164 @@
+.history-page {
+  min-height: 100vh;
+  padding: 36px 20px 90px;
+  background: #f5f6f8;
+}
+
+.history-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.history-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  color: #d6001c;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.history-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.history-heading-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 15px;
+  background: #fff0f2;
+  color: #d6001c;
+}
+
+.history-heading h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  color: #202838;
+}
+
+.history-heading p {
+  margin: 0;
+  color: #7b8492;
+  font-size: 14px;
+}
+
+.history-panel {
+  padding: 28px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.history-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border: 1px solid #dce1e8;
+  border-radius: 11px;
+  color: #8791a0;
+}
+
+.history-search:focus-within {
+  border-color: #d6001c;
+}
+
+.history-search input {
+  width: 100%;
+  height: 52px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+}
+
+.history-filters {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+
+.history-filters button {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border: 1px solid #e1e4e9;
+  border-radius: 24px;
+  background: #fff;
+  color: #687384;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.history-filters button.active {
+  border-color: #d6001c;
+  background: #fff0f2;
+  color: #d6001c;
+  font-weight: 700;
+}
+
+.history-results {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.history-results h2 {
+  margin: 0;
+  color: #263041;
+  font-size: 19px;
+}
+
+.history-results span {
+  color: #8a93a1;
+  font-size: 13px;
+}
+
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 60px 20px;
+  color: #98a2b0;
+  text-align: center;
+}
+
+.history-empty h3 {
+  margin: 0;
+  color: #303849;
+}
+
+.history-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .history-page {
+    padding: 24px 12px 90px;
+  }
+
+  .history-panel {
+    padding: 16px;
+  }
+
+  .history-heading h1 {
+    font-size: 22px;
+  }
+
+  .history-heading-icon {
+    width: 46px;
+    height: 46px;
+  }
+}
