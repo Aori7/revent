@@ -2,10 +2,10 @@ import "../css/dashboard.css";
 import "../css/everyday-banking.css";
 import EverydayBanking from "./dashboard/EverydayBanking";
 import AccountCard from "./dashboard/AccountCard";
-import YourCards from './dashboard/YourCards';
-import RecentTransactions from './dashboard/RecentTransactions';
-import SecurityCard from './dashboard/SecurityCard';
-import RewardsCard from './dashboard/RewardsCard';
+import YourCards from "./dashboard/YourCards";
+import RecentTransactions from "./dashboard/RecentTransactions";
+import SecurityCard from "./dashboard/SecurityCard";
+import RewardsCard from "./dashboard/RewardsCard";
 
 function Dashboard() {
   // temporary data until we connect our database
@@ -19,28 +19,37 @@ function Dashboard() {
   return (
     <main className="dashboard">
       {/* Welcome */}
-      <section className="dashboard-welcome">
-        <div>
-          <h1>Welcome, Kiki</h1>
-          <p>A clear view of your money. A little more peace of mind.</p>
-        </div>
-        <EverydayBanking />
+      <section className="dashboard-top">
+        <div className="dashboard-greeting">
+          <div>
+            <h1>Welcome back, Kiki</h1>
+            <p>Here's an overview of your banking activity.</p>
+          </div>
 
-        <div className="dashboard-date">
-          <p>Friday, 6 November 2026</p>
-          <span>Balances updated just now</span>
+          <div className="dashboard-update">
+            <span className="dashboard-current-date">
+              {new Date().toLocaleDateString("en-SG", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
+          </div>
+        </div>
+
+        <div className="dashboard-quick-actions">
+          <EverydayBanking />
         </div>
       </section>
       {/* main components for dashboard */}
       <div className="dashboard-grid">
-        <div className="dashboard-account">
-          <AccountCard account={account} />
-        </div>
-
         <div className="dashboard-cards">
           <YourCards />
         </div>
-
+        <div className="dashboard-account">
+          <AccountCard account={account} />
+        </div>
         <div className="dashboard-transactions">
           <RecentTransactions />
         </div>
@@ -52,8 +61,7 @@ function Dashboard() {
         <div className="dashboard-rewards">
           <RewardsCard />
         </div>
-    </div>
-
+      </div>
     </main>
   );
 }
