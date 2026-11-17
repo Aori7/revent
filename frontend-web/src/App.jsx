@@ -12,6 +12,7 @@ import Dashboard from "./components/dashboard";
 import MobileNavbar from "./components/MobileNavbar";
 
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import Accounts from "./pages/Accounts";
 import Transfer from "./pages/Transfer";
 import Cards from "./pages/Cards";
@@ -39,12 +40,9 @@ import PayNowHome from "./pages/PayNowHome";
 import ScanAndPay from "./pages/ScanAndPay";
 import ScheduledTransfer from "./pages/ScheduledTransfer";
 import TransactionHistory from "./pages/TransactionHistory";
-// Demo-only route protection
-function DemoProtectedRoute() {
-  const isLoggedIn = sessionStorage.getItem("reventDemoLogin") === "true";
+import AuthTest from "./pages/authTest";
 
-  return isLoggedIn ? <Outlet /> : <Navigate to="/login" replace />;
-}
+import ProtectedRoute from './components/protectedRoute';
 
 function BankingLayout() {
   const { recordPaymentClick } = usePaymentBehaviour();
@@ -76,13 +74,14 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
         {/* Temporary chatbot preview with existing navbar */}
         <Route element={<BankingLayout />}>
           <Route path="/scam-chatbot-preview" element={<ScamChatbot />} />
         </Route>
 
-        <Route element={<DemoProtectedRoute />}>
+        <Route element={<ProtectedRoute />}>
           <Route element={<BankingLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/risk-test" element={<RiskTest />} />
@@ -97,6 +96,7 @@ export default function App() {
             <Route path="/transfer" element={<TransferHub />} />
             <Route path="/transfer/ecommerce" element={<Transfer />} />
             <Route path="/transfer/review" element={<PaymentReview />} />
+            <Route path="/auth-test" element={<AuthTest />} />
 
             {/* <Route
               path="/transfer/transaction-review"
