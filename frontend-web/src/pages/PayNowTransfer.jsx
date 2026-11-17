@@ -16,29 +16,39 @@ import { saveDraft } from "../utils/demoSession";
 import { demoAccount } from "../data/demoBanking";
 import { usePaymentBehaviour } from "../context/PaymentBehaviourContext";
 
-// simulated PayNow directory for prototype testing
+// Simulated PayNow directory for prototype testing.
+// The updated shared assessment checks completed outgoing payment
+// history when deciding whether a recipient is first-time.
 const demoRecipients = {
   91234567: {
     maskedName: "ALXX TAX",
-    isNewRecipient: true,
+    isNewRecipient: false,
   },
   87654321: {
     maskedName: "CHXX LXX",
-    isNewRecipient: false,
+    isNewRecipient: true,
+  },
+  82223333: {
+  maskedName: "JAXX LXX",
+  isNewRecipient: true,
   },
 };
 
 export default function PayNowTransfer() {
   const [searchParams] = useSearchParams();
 
-  const [mobile, setMobile] = useState(searchParams.get("mobile") || "");
+  const [mobile, setMobile] = useState(
+    searchParams.get("mobile") || ""
+  );
   const [recipient, setRecipient] = useState(null);
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
   const [error, setError] = useState("");
+
   const navigate = useNavigate();
   const { assess } = useTransactionRisk();
   const { recordPaymentClick } = usePaymentBehaviour();
+
   useEffect(() => {
     const selectedMobile = searchParams.get("mobile");
 
@@ -57,6 +67,7 @@ export default function PayNowTransfer() {
       setError("");
     }
   }, [searchParams]);
+
   function lookupRecipient() {
     const cleaned = mobile.replace(/\D/g, "");
 
@@ -69,7 +80,9 @@ export default function PayNowTransfer() {
     const found = demoRecipients[cleaned];
 
     if (!found) {
-      setError("This number is not registered in the demo PayNow directory.");
+      setError(
+        "This number is not registered in the demo PayNow directory."
+      );
       setRecipient(null);
       return;
     }
@@ -104,7 +117,7 @@ export default function PayNowTransfer() {
     }
 
     try {
-      // 1. Save the PayNow payment draft
+      // 1. Save the PayNow payment draft.
       const draft = saveDraft({
         transferType: "paynow",
         recipientName: recipient.maskedName,
@@ -113,17 +126,17 @@ export default function PayNowTransfer() {
         reference,
       });
 
-      // 2. Calculate risk using simulator triggers
+      // 2. Calculate risk using the shared service.
       const riskResult = assess(draft, {
         isNewRecipient: recipient.isNewRecipient,
       });
 
-      // 3. Save the assessment
+      // 3. Save the assessment.
       saveRiskAssessment(draft, riskResult);
 
       console.log("PayNow Risk Assessment:", riskResult);
 
-      // 4. Route based on risk
+      // 4. Route based on risk.
       setError("");
 
       if (riskResult.level === "low") {
@@ -156,7 +169,9 @@ export default function PayNowTransfer() {
             <h2>Recipient Details</h2>
           </div>
 
-          <label htmlFor="paynow-mobile">Recipient mobile number</label>
+          <label htmlFor="paynow-mobile">
+            Recipient mobile number
+          </label>
 
           <div className="paynow-lookup-row">
             <input
@@ -193,15 +208,16 @@ export default function PayNowTransfer() {
               <h3>{recipient.maskedName}</h3>
 
               <p>
-                This is the partially masked registered name returned by the
-                simulated PayNow lookup.
+                This is the partially masked registered name returned
+                by the simulated PayNow lookup.
               </p>
 
               <div className="paynow-privacy-note">
                 <Info size={18} />
                 <span>
-                  A masked name does not confirm someone's identity. Verify
-                  unexpected payment requests through a trusted channel.
+                  A masked name does not confirm someone's identity.
+                  Verify unexpected payment requests through a trusted
+                  channel.
                 </span>
               </div>
             </div>
@@ -226,7 +242,9 @@ export default function PayNowTransfer() {
             required
           />
 
-          <label htmlFor="paynow-reference">Reference (optional)</label>
+          <label htmlFor="paynow-reference">
+            Reference (optional)
+          </label>
 
           <input
             id="paynow-reference"
@@ -247,12 +265,15 @@ export default function PayNowTransfer() {
             <div className="paynow-security-note">
               <ShieldCheck size={18} />
               <span>
-                REVENT checks for suspicious activity before you complete a
-                transfer.
+                REVENT checks for suspicious activity before you
+                complete a transfer.
               </span>
             </div>
 
-            <button type="submit" className="paynow-continue-button">
+            <button
+              type="submit"
+              className="paynow-continue-button"
+            >
               Continue
               <ArrowRight size={18} />
             </button>
@@ -263,6 +284,7 @@ export default function PayNowTransfer() {
           Demo only. No real PayNow lookup or money transfer occurs.
         </p>
       </div>
+
       <form
         className="paynow-card"
         onClick={(event) => {
