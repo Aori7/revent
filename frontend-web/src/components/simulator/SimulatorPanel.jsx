@@ -49,7 +49,6 @@ export default function SimulatorPanel() {
     <div className="simulator-panel">
       <div className="simulator-panel-header">
         <h2>Simulation Controls</h2>
-        <span className="simulator-demo-badge">DEMO</span>
       </div>
 
       <p className="simulator-description">

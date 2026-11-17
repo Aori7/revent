@@ -1,28 +1,15 @@
-
-/* Floating Simulator Container */
-
-.simulator-container {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 1000;
-
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 16px;
-}
-
-/* Floating Bubble */
-
 .simulator-bubble {
-    width: 68px;
-    height: 68px;
+    position: fixed;
+    z-index: 1001;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    width: 68px;
+    height: 68px;
+
+    padding: 0;
     border: none;
     border-radius: 50%;
 
@@ -32,143 +19,379 @@
         #c21f2b
     );
 
-    color: white;
-    cursor: pointer;
+    color: #ffffff;
 
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
-    transition: transform 0.2s, box-shadow 0.2s;
+
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+
+    transition:
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
 }
 
 .simulator-bubble:hover {
-    transform: scale(1.08);
+    filter: brightness(1.08);
     box-shadow: 0 8px 26px rgba(0, 0, 0, 0.28);
 }
 
-/* Simulator Panel */
+.simulator-bubble:active {
+    cursor: grabbing;
+}
 
-.simulator-panel {
-    width: 380px;
-    max-width: calc(100vw - 40px);
-    max-height: calc(100dvh - 130px);
+.simulator-bubble:focus-visible {
+    outline: 3px solid #ee2722;
+    outline-offset: 4px;
+}
+
+
+.simulator-panel-wrapper {
+    position: fixed;
+
+    right: 24px;
+    bottom: 115px;
+
+    z-index: 1000;
+
+    width: min(400px, calc(100vw - 40px));
+    max-height: calc(100dvh - 140px);
+
     overflow-y: auto;
+    overscroll-behavior: contain;
 
-    padding: 26px;
-    box-sizing: border-box;
+    background: #ffffff;
 
-    background: white;
     border: 1px solid #e5e7eb;
     border-radius: 18px;
 
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+    box-shadow:
+        0 12px 35px rgba(0, 0, 0, 0.15);
 }
 
-/* Panel Header */
+.simulator-panel-wrapper,
+.simulator-panel-wrapper * {
+    box-sizing: border-box;
+}
+
+.simulator-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    width: 100%;
+    max-width: none;
+    max-height: none;
+
+    padding: 24px;
+
+    background: #ffffff;
+    border: none;
+    border-radius: 18px;
+
+    color: #202020;
+    font-family: "Inter", sans-serif;
+
+    overflow: visible;
+}
 
 .simulator-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 .simulator-panel-header h2 {
-    font-size: 24px;
-    font-weight: 700;
-    color: #202020;
     margin: 0;
+
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1.3;
+
+    color: #202020;
 }
 
 .simulator-demo-badge {
+    padding: 6px 12px;
+
     background: #fde8ea;
     color: #c21f2b;
 
-    padding: 6px 12px;
     border-radius: 20px;
 
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
 }
 
-/* Description */
 
 .simulator-description {
-    font-size: 18px;
-    line-height: 1.5;
-    color: #666666;
-    margin: 16px 0 24px;
+    margin: 0;
+
+    font-size: 15px;
+    line-height: 1.6;
+
+    color: #6b7280;
+}
+.simulator-panel label[for="payment-restriction"] {
+    display: block;
+
+    margin-bottom: -8px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    color: #374151;
 }
 
-/* Options */
+.simulator-panel select {
+    display: block;
+
+    width: 100%;
+    min-width: 0;
+
+    padding: 12px 14px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #202020;
+
+    font-family: inherit;
+    font-size: 14px;
+
+    cursor: pointer;
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.simulator-panel select:focus {
+    border-color: #c21f2b;
+    box-shadow: 0 0 0 3px rgba(194, 31, 43, 0.1);
+}
+
 
 .simulator-options {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+
+    width: 100%;
 }
 
 .simulator-option {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
 
-    padding: 16px;
+    width: 100%;
+    min-width: 0;
+
+    padding: 14px;
+
     background: #f7f8fa;
+
+    border: 1px solid transparent;
     border-radius: 12px;
 
     color: #202020;
-    font-size: 20px;
+
+    font-size: 15px;
     font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.simulator-option:hover {
+    background: #fef2f2;
+    border-color: #f5c7cb;
 }
 
 .simulator-option svg {
+    width: 22px;
+    height: 22px;
+
     color: #c21f2b;
     flex-shrink: 0;
 }
 
-/* Simulator trigger controls */
-
 .simulator-option span {
-  flex: 1;
+    flex: 1;
+    min-width: 0;
+
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
+
+
+/* ON/OFF Toggle Switch */
 
 .simulator-option input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--red-ocbc, #ee2722);
-  cursor: pointer;
-  flex-shrink: 0;
+    appearance: none;
+    -webkit-appearance: none;
+
+    position: relative;
+
+    width: 48px;
+    height: 28px;
+
+    margin: 0;
+    padding: 0;
+
+    border: none;
+    border-radius: 50px;
+
+    background: #d1d5db;
+
+    flex-shrink: 0;
+    cursor: pointer;
+
+    transition: background-color 0.25s ease;
 }
 
+/* White circular knob */
+
+.simulator-option input[type="checkbox"]::before {
+    content: "";
+
+    position: absolute;
+    top: 3px;
+    left: 3px;
+
+    width: 22px;
+    height: 22px;
+
+    background: #ffffff;
+    border-radius: 50%;
+
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+    transition: transform 0.25s ease;
+}
+
+/* ON state */
+.simulator-option input[type="checkbox"]:checked {
+    background: #c21f2b;
+}
+
+.simulator-option input[type="checkbox"]:checked::before {
+    transform: translateX(20px);
+}
+
+/* Keyboard accessibility */
+
+.simulator-option input[type="checkbox"]:focus-visible {
+    outline: 3px solid rgba(194, 31, 43, 0.35);
+    outline-offset: 3px;
+}
+
+
 .simulator-reset {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 
-  width: 100%;
-  margin-top: 18px;
-  padding: 12px;
+    width: 100%;
+    min-height: 46px;
 
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+    margin-top: 4px;
+    padding: 12px 16px;
 
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #374151;
+
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .simulator-reset:hover {
-  background: rgba(128, 128, 128, 0.08);
+    background: #f7f8fa;
+    border-color: #9ca3af;
 }
 
-/* Responsive */
+.simulator-reset svg {
+    width: 18px;
+    height: 18px;
 
-@media (max-width: 600px) {
-    .simulator-container {
-        bottom: 20px;
-        right: 20px;
+    flex-shrink: 0;
+}
+
+.simulator-panel-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.simulator-panel-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.simulator-panel-wrapper::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+
+    .simulator-panel-wrapper {
+        right: 12px;
+
+        bottom: calc(
+            170px + env(safe-area-inset-bottom)
+        );
+
+        width: min(380px, calc(100vw - 24px));
+
+        max-height: calc(
+            100dvh - 210px - env(safe-area-inset-bottom)
+        );
     }
+
+    .simulator-panel {
+        padding: 20px;
+        gap: 14px;
+    }
+
+    .simulator-panel-header h2 {
+        font-size: 20px;
+    }
+
+    .simulator-description {
+        font-size: 14px;
+    }
+
+    .simulator-option {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .simulator-reset {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 400px) {
 
     .simulator-bubble {
         width: 60px;
@@ -176,14 +399,31 @@
     }
 
     .simulator-panel {
-        width: min(380px, calc(100vw - 40px));
-        padding: 20px;
+        padding: 16px;
+    }
+
+    .simulator-panel-header h2 {
+        font-size: 18px;
+    }
+
+    .simulator-option {
+        gap: 10px;
+        padding: 10px;
+        font-size: 13px;
+    }
+
+    .simulator-option svg {
+        width: 20px;
+        height: 20px;
     }
 }
-/* for mobile view to make button rest above nav bar*/
-@media (max-width: 768px) {
-    .simulator-container {
-        bottom: calc(96px + env(safe-area-inset-bottom));
-        right: 20px;
+
+@media (prefers-reduced-motion: reduce) {
+
+    .simulator-bubble,
+    .simulator-option,
+    .simulator-reset,
+    .simulator-panel select {
+        transition: none;
     }
 }
