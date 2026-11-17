@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, Bookmark, CheckCircle2, ChevronDown,
@@ -8,18 +8,68 @@ import {
 import EducationTopicCard from '../components/education/educationTopicCard';
 import useDemoLearning from '../hooks/useDemoLearning';
 import {
-  awarenessCategories, getAwarenessLevel, quickTips, scamTopics, topicCategories
+  awarenessCategories, quickTips, scamTopics, topicCategories
 } from '../data/educationData';
+import { getAwarenessLevels } from '../services/readinessApi';
 import '../css/education.css';
 
 const quickIcons = { flag: Flag, shield: ShieldCheck, video: Video, check: CheckCircle2 };
+
+const awarenessLabels = {
+  BEGINNER: 'Beginner',
+  DEVELOPING: 'Developing',
+  CONFIDENT: 'Confident'
+};
 
 function Education() {
   const [category, setCategory] = useState('All topics');
   const [query, setQuery] = useState('');
   const [savedOpen, setSavedOpen] = useState(false);
   const [expandedTip, setExpandedTip] = useState(null);
-  const { learning, toggleSaved } = useDemoLearning();
+  const {
+    learning, toggleSaved, loading: learningLoading,
+    error: learningError, actionError, isUpdating,
+    retry: retryLearning
+  } = useDemoLearning();
+  const [awarenessLevels, setAwarenessLevels] = useState([]);
+  const [awarenessLoading, setAwarenessLoading] = useState(true);
+  const [awarenessError, setAwarenessError] = useState('');
+  const [awarenessRetry, setAwarenessRetry] = useState(0);
+
+  // Fetch personalised awareness levels from the authenticated backend.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAwareness() {
+      setAwarenessLoading(true);
+      setAwarenessError('');
+
+      try {
+        const data = await getAwarenessLevels();
+
+        if (!Array.isArray(data?.levels)) {
+          throw new Error('Invalid awareness response.');
+        }
+
+        if (!cancelled) {
+          setAwarenessLevels(data.levels);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setAwarenessLevels([]);
+          setAwarenessError(error.message || 'Unable to load awareness levels.');
+        }
+      } finally {
+        if (!cancelled) setAwarenessLoading(false);
+      }
+    }
+
+    loadAwareness();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [awarenessRetry]);
 
   const matchingTopics = useMemo(() => scamTopics.filter((topic) => {
     const inCategory = category === 'All topics' || topic.category === category;
@@ -29,7 +79,7 @@ function Education() {
   }), [category, query]);
 
   const savedTopics = scamTopics.filter((topic) => learning.savedIds.includes(topic.id));
-  const latestScores = learning.lastReadiness?.categoryScores;
+  const hasAssessment = awarenessLevels.length > 0;
 
   return (
     <main className="edu-page">
@@ -58,26 +108,42 @@ function Education() {
             <div>
               <span className="edu-section-eyebrow">YOUR LEARNING JOURNEY</span>
               <h2 id="edu-preview-heading">Your scam awareness levels</h2>
-              <p>{latestScores ? 'Based on your latest readiness check.' : 'Take a readiness check to discover your level in each scam category.'}</p>
+              <p>{awarenessLoading
+                ? 'Retrieving your awareness levels...'
+                : awarenessError
+                  ? 'Your awareness levels are temporarily unavailable.'
+                  : hasAssessment
+                    ? 'Personalised levels based on your assessment history.'
+                    : 'Take a readiness check to discover your level in each scam category.'}</p>
             </div>
             <Link to="/awareness" className="edu-view-all">View All <ArrowRight size={17}/></Link>
           </div>
-          <div className="edu-preview-grid">
-            {awarenessCategories.map((item) => {
-              const score = latestScores?.[item.code];
-              const percentage = score?.percentage ?? null;
-              const level = percentage == null ? 'Not assessed' : getAwarenessLevel(percentage);
-              return (
-                <article className="edu-preview-card" key={item.code}>
-                  <div className="edu-preview-card-heading"><strong>{item.title}</strong><span className={`edu-level-pill ${level.toLowerCase().replace(' ', '-')}`}>{level}</span></div>
-                  <div className="edu-preview-score"><span>{percentage == null ? 'Complete your check' : 'Current awareness'}</span><strong>{percentage == null ? '—' : `${percentage}%`}</strong></div>
-                  <div className={`edu-progress-track edu-preview-progress ${level.toLowerCase()}`} role="progressbar" aria-label={`${item.title} awareness`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentage ?? 0}>
-                    <span style={{ width: `${percentage ?? 0}%` }}/>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+          {awarenessLoading ? (
+            <p role="status">Loading awareness levels...</p>
+          ) : awarenessError ? (
+            <div>
+              <p role="alert">{awarenessError}</p>
+              <button type="button" className="edu-outline-button" onClick={() => setAwarenessRetry(value => value + 1)}>Try again</button>
+            </div>
+          ) : (
+            <div className="edu-preview-grid">
+              {awarenessCategories.map((item) => {
+                const score = awarenessLevels.find(entry => entry.category === item.code);
+                const percentage = score?.percentage ?? null;
+                // Use the stored level, not a level recalculated from the latest score.
+                const level = awarenessLabels[score?.level] || 'Not assessed';
+                return (
+                  <article className="edu-preview-card" key={item.code}>
+                    <div className="edu-preview-card-heading"><strong>{item.title}</strong><span className={`edu-level-pill ${level.toLowerCase().replace(' ', '-')}`}>{level}</span></div>
+                    <div className="edu-preview-score"><span>{percentage == null ? 'Complete your check' : 'Latest category score'}</span><strong>{percentage == null ? '—' : `${percentage}%`}</strong></div>
+                    <div className={`edu-progress-track edu-preview-progress ${level.toLowerCase().replace(' ', '-')}`} role={percentage == null ? undefined : "progressbar"} aria-label={percentage == null ? undefined : `${item.title} latest category score`} aria-valuemin={percentage == null ? undefined : 0} aria-valuemax={percentage == null ? undefined : 100} aria-valuenow={percentage ?? undefined}>
+                      <span style={{ width: `${percentage ?? 0}%` }}/>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <section className="edu-section" aria-labelledby="edu-tips-heading">
@@ -114,6 +180,17 @@ function Education() {
             <span className="edu-topic-count">{matchingTopics.length} guides</span>
           </div>
 
+          {learningLoading ? (
+            <p role="status">Loading your saved cards and learning progress...</p>
+          ) : learningError ? (
+            <div role="alert">
+              <p>{learningError}</p>
+              <button type="button" className="edu-outline-button" onClick={retryLearning}>Try again</button>
+            </div>
+          ) : (
+            <>
+          {actionError && <p role="alert">{actionError}</p>}
+          {isUpdating && <p role="status">Updating your bookmarks...</p>}
           <div className="edu-saved-section">
             <div className="edu-saved-header">
               <span className="edu-saved-icon"><Bookmark size={21}/></span>
@@ -153,6 +230,8 @@ function Education() {
           ) : (
             <div className="edu-empty-state"><Search size={28}/><h3>No guides found</h3><p>Try a different keyword or topic.</p><button type="button" onClick={() => { setQuery(''); setCategory('All topics'); }}>Clear filters</button></div>
           )}
+            </>
+          )}
         </section>
 
         <section className="edu-check-banner">
@@ -160,7 +239,7 @@ function Education() {
           <div><h2>How ready are you to spot an AI-powered scam?</h2><p>Try a short nine-question readiness check to see how you respond to suspicious requests.</p></div>
           <Link to="/readiness" className="edu-secondary-button">Take a readiness check <ChevronRight size={18}/></Link>
         </section>
-        <p className="edu-demo-note">Educational prototype with fictional examples. Awareness scores and bookmarks are currently stored in this browser, not Supabase.</p>
+        <p className="edu-demo-note">Educational prototype with fictional examples. Awareness results, bookmarks and learning progress are saved to your account.</p>
       </div>
     </main>
   );

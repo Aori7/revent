@@ -53,10 +53,6 @@ function Login() {
                 result.session.access_token
             );
 
-            sessionStorage.setItem(
-                'reventAccessToken',
-                result.session.access_token
-            );
             // Redirect to banking home page
             navigate('/', { replace: true });
 
