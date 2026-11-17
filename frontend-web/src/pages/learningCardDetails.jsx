@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, CheckCircle2,
   ChevronLeft, LockKeyhole, Play, ShieldAlert, ShieldCheck, Video
 } from 'lucide-react';
 import useDemoLearning, { LEARNING_STAGES } from '../hooks/useDemoLearning';
-import { getAwarenessLevel, lessonScenarios, scamTopics } from '../data/educationData';
+import { awarenessCategories, lessonScenarios, scamTopics } from '../data/educationData';
+import { getAwarenessLevels } from '../services/readinessApi';
 import '../css/education.css';
 
 const practiceOptions = [
@@ -14,7 +15,14 @@ const practiceOptions = [
   'Ask the sender to provide another recording as proof'
 ];
 
-function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }) {
+const awarenessLabels = {
+  BEGINNER: 'Beginner',
+  DEVELOPING: 'Developing',
+  CONFIDENT: 'Confident'
+};
+
+function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted,
+  isUpdating, actionError, assessment, awarenessLoading, awarenessError, retryAwareness }) {
   const completedStages = learning.completedStages?.[topic.id] || [];
   const completedCount = LEARNING_STAGES.filter((tier) => completedStages.includes(tier)).length;
   const [currentTier, setCurrentTier] = useState(
@@ -36,20 +44,30 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
   const heading = scenarioSet?.heading || topic.title;
   const saved = learning.savedIds.includes(topic.id);
 
-  const assessedPercentage = learning.lastReadiness?.categoryScores?.[topic.categoryCode]?.percentage;
-  const assessedLevel = assessedPercentage == null ? null : getAwarenessLevel(assessedPercentage);
+  // Use the stored level, not the level implied by the most recent score.
+  // A reassessment may not downgrade the stored level immediately.
+  const isAssessedCategory = awarenessCategories.some(item => item.code === topic.categoryCode);
+  const assessedPercentage = assessment?.percentage ?? null;
+  const assessedLevel = awarenessLabels[assessment?.level] || null;
+  const recommendedIndex = LEARNING_STAGES.indexOf(assessedLevel);
+  const recommendationUnlocked = recommendedIndex >= 0 && (
+    recommendedIndex === 0 || completedStages.includes(LEARNING_STAGES[recommendedIndex - 1])
+  );
 
   function showCard(tier) {
     const index = LEARNING_STAGES.indexOf(tier);
+    if (isUpdating || index < 0) return;
     if (index > 0 && !completedStages.includes(LEARNING_STAGES[index - 1])) return;
     setCurrentTier(tier);
     setScreen('scenario');
     setPracticeChoice(null);
   }
 
-  function finishCard() {
-    markStageCompleted(topic.id, currentTier);
-    setScreen(currentTier === 'Confident' ? 'complete' : 'milestone');
+  async function finishCard() {
+    const success = await markStageCompleted(topic.id, currentTier);
+    if (success) {
+      setScreen(currentTier === 'Confident' ? 'complete' : 'milestone');
+    }
   }
 
   return (
@@ -58,6 +76,9 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
         <div className="edu-lesson-topbar">
           <Link to="/education" className="edu-lesson-back"><ArrowLeft size={19}/><span>Back to Scam Education</span></Link>
         </div>
+
+        {actionError && <p className="edu-lesson-note" role="alert">{actionError}</p>}
+        {isUpdating && <p className="edu-lesson-note" role="status">Saving your learning progress...</p>}
 
         {screen !== 'complete' && screen !== 'practice' && (
           <>
@@ -74,13 +95,22 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
               </div>
             </div>
 
-            <p className="edu-lesson-stage-heading">{heading} — 3 learning cards</p>
+            <p className="edu-lesson-stage-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+              <span>{heading} — 3 learning cards</span>
+              <button type="button" disabled={isUpdating} onClick={() => toggleSaved(topic.id)}
+                className="edu-lesson-bookmark"
+                style={{ position: 'static', inset: 'auto', transform: 'none', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label={saved ? 'Remove learning series from saved' : 'Save learning series'} aria-pressed={saved}
+                title={saved ? 'Remove saved learning series' : 'Save all 3 learning cards'}>
+                {saved ? <BookmarkCheck size={20}/> : <Bookmark size={20}/>}
+              </button>
+            </p>
             <div className="edu-lesson-stage-grid" aria-label="Learning card stages">
               {LEARNING_STAGES.map((tier, index) => {
                 const done = completedStages.includes(tier);
                 const locked = index > 0 && !completedStages.includes(LEARNING_STAGES[index - 1]);
                 return (
-                  <button key={tier} type="button" disabled={locked}
+                  <button key={tier} type="button" disabled={locked || isUpdating}
                     className={`edu-lesson-stage-card ${done ? 'done' : ''} ${tier === currentTier ? 'active' : ''}`}
                     aria-current={tier === currentTier ? 'step' : undefined}
                     onClick={() => showCard(tier)}>
@@ -95,11 +125,40 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
               })}
             </div>
 
-            {assessedLevel && (
-              <p className="edu-lesson-quiz-note">
-                Your readiness-check awareness level: <strong>{assessedLevel} ({assessedPercentage}%)</strong>.
-                This stays separate from learning-card completion.
-              </p>
+            {isAssessedCategory && awarenessLoading && (
+              <p className="edu-lesson-quiz-note" role="status">Loading your awareness level...</p>
+            )}
+            {isAssessedCategory && !awarenessLoading && awarenessError && (
+              <div className="edu-lesson-quiz-note" role="alert">
+                Unable to load your awareness level. You can still continue learning.{' '}
+                <button type="button" className="edu-flip-button" onClick={retryAwareness}>Try again</button>
+              </div>
+            )}
+            {isAssessedCategory && !awarenessLoading && !awarenessError && (
+              assessedLevel ? (
+                <div className="edu-lesson-quiz-note">
+                  <p>Your readiness-check awareness level: <strong>{assessedLevel}</strong>.
+                    {assessedPercentage != null && <> Latest category score: <strong>{assessedPercentage}%</strong>.</>}
+                  </p>
+                  {!recommendationUnlocked && (
+                    <p>Complete the earlier cards to unlock your recommended card.</p>
+                  )}
+                  <p>Recommended card: <strong>{assessedLevel}</strong>.</p>
+                  {recommendationUnlocked && currentTier !== assessedLevel && (screen === 'scenario' || screen === 'redFlags') ? (
+                    <button type="button" className="edu-flip-button" disabled={isUpdating} onClick={() => showCard(assessedLevel)}>
+                      Open recommended {assessedLevel} card <ArrowRight size={18}/>
+                    </button>
+                  ) : null}
+                  <p>Your awareness level stays separate from learning-card completion.</p>
+                </div>
+              ) : (
+                <p className="edu-lesson-quiz-note">You have not been assessed for this category yet.{' '}
+                  <Link to="/readiness">Take the readiness check</Link> to get a personalised recommendation.
+                </p>
+              )
+            )}
+            {!isAssessedCategory && (
+              <p className="edu-lesson-quiz-note">This topic is not assessed in the current readiness check. Continue through the learning cards at your own pace.</p>
             )}
           </>
         )}
@@ -109,10 +168,6 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
             <article className="edu-flip-card">
               <header className="edu-flip-card-heading">
                 <h1>{screen === 'scenario' ? 'How it unfolds' : 'Red Flags'}</h1>
-                <button type="button" onClick={() => toggleSaved(topic.id)} className="edu-lesson-bookmark"
-                  aria-label={saved ? 'Remove learning series from saved' : 'Save learning series'} aria-pressed={saved}>
-                  {saved ? <BookmarkCheck size={20}/> : <Bookmark size={20}/>}
-                </button>
               </header>
               {screen === 'scenario' ? (
                 <>
@@ -122,7 +177,7 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
                   </div>
                   <div className="edu-lesson-content">
                     <p>{scenario.scene}</p>
-                    <button type="button" className="edu-flip-button" onClick={() => setScreen('redFlags')}>
+                    <button type="button" className="edu-flip-button" disabled={isUpdating} onClick={() => setScreen('redFlags')}>
                       Tap to reveal the red flags <ArrowRight size={18}/>
                     </button>
                   </div>
@@ -131,10 +186,10 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
                 <div className="edu-lesson-flags">
                   <ul>{scenario.redFlags.map((flag) => <li key={flag}>{flag}</li>)}</ul>
                   <div className="edu-lesson-flags-actions">
-                    <button className="edu-lesson-finish" type="button" onClick={finishCard}>
+                    <button className="edu-lesson-finish" type="button" disabled={isUpdating} onClick={finishCard}>
                       Complete Card {currentIndex + 1} <CheckCircle2 size={17}/>
                     </button>
-                    <button type="button" className="edu-flip-button" onClick={() => setScreen('scenario')}>
+                    <button type="button" className="edu-flip-button" disabled={isUpdating} onClick={() => setScreen('scenario')}>
                       <ChevronLeft size={18}/> Tap to look back at the scenario
                     </button>
                   </div>
@@ -151,7 +206,7 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
             <span className="edu-lesson-milestone-score">{progress}%</span>
             <h1>{currentTier} card completed!</h1>
             <p>You've completed {completedCount} of 3 learning cards in {heading}. Your next card covers a more challenging situation.</p>
-            <button className="edu-primary-button" type="button" onClick={() => showCard(nextTier)}>
+            <button className="edu-primary-button" type="button" disabled={isUpdating} onClick={() => showCard(nextTier)}>
               Continue to {nextTier} <ArrowRight size={18}/>
             </button>
             <Link to="/education" className="edu-done-back">Return to Education</Link>
@@ -207,14 +262,77 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted }
 function EducationDetail() {
   const { topicId } = useParams();
   const topic = scamTopics.find((item) => item.id === topicId);
-  const { learning, toggleSaved, markStageCompleted } = useDemoLearning();
+  const {
+    learning, toggleSaved, markStageCompleted,
+    loading: learningLoading, error: learningError,
+    isUpdating, actionError, retry: retryLearning
+  } = useDemoLearning();
+  const [levels, setLevels] = useState([]);
+  const [awarenessLoading, setAwarenessLoading] = useState(true);
+  const [awarenessError, setAwarenessError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+  const categoryCode = topic?.categoryCode;
+  const isAssessedCategory = awarenessCategories.some(item => item.code === categoryCode);
+
+  useEffect(() => {
+    if (!isAssessedCategory) return;
+    let cancelled = false;
+
+    async function loadAwareness() {
+      setAwarenessLoading(true);
+      setAwarenessError('');
+      setLevels([]);
+
+      try {
+        const data = await getAwarenessLevels();
+        if (!Array.isArray(data?.levels)) {
+          throw new Error('Invalid awareness response.');
+        }
+        if (!cancelled) setLevels(data.levels);
+      } catch (error) {
+        if (!cancelled) setAwarenessError(error.message || 'Unable to load awareness levels.');
+      } finally {
+        if (!cancelled) setAwarenessLoading(false);
+      }
+    }
+
+    loadAwareness();
+    return () => { cancelled = true; };
+  }, [isAssessedCategory, categoryCode, retryCount]);
 
   if (!topic) {
     return <main className="edu-page"><div className="edu-container edu-not-found"><h1>Learning cards not found</h1><Link to="/education">Back to Scam Education</Link></div></main>;
   }
 
+  // Mount the lesson only once the stored stages have loaded, so that
+  // its initial difficulty resumes the user's first unfinished card.
+  if (learningLoading || learningError) {
+    return (
+      <main className="edu-page edu-lesson-page">
+        <div className="edu-container edu-lesson-shell">
+          <div className="edu-lesson-topbar">
+            <Link to="/education" className="edu-lesson-back"><ArrowLeft size={19}/><span>Back to Scam Education</span></Link>
+          </div>
+          {learningLoading ? (
+            <p role="status">Loading your learning progress...</p>
+          ) : (
+            <div role="alert">
+              <p>{learningError}</p>
+              <button type="button" className="edu-outline-button" onClick={retryLearning}>Try again</button>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  const assessment = levels.find(item => item.category === topic.categoryCode);
+
   return <LearningCardLesson key={topic.id} topic={topic} learning={learning}
-    toggleSaved={toggleSaved} markStageCompleted={markStageCompleted}/>;
+    toggleSaved={toggleSaved} markStageCompleted={markStageCompleted}
+    isUpdating={isUpdating} actionError={actionError}
+    assessment={assessment} awarenessLoading={awarenessLoading}
+    awarenessError={awarenessError} retryAwareness={() => setRetryCount(value => value + 1)}/>;
 }
 
 export default EducationDetail;

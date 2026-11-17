@@ -366,22 +366,6 @@ export const awarenessCategories = [
   { code: 'BOSS', title: 'Fake Boss & Colleague', description: 'Recognising workplace impersonation and payment pressure.', topicId: 'fake-boss' }
 ];
 
-/**
- * Demo-only readiness questions. Correct options should NOT be sent to React
- * after real Supabase / Express integration: move grading into the backend.
- */
-export const readinessQuestions = [
-  { id: 1, category: 'FAMILY', text: 'A new number says it belongs to your daughter and asks you to PayNow $500 urgently. What is the safest first step?', options: ['Transfer the money immediately', 'Call her usual number to verify', 'Ask the new number for its PayNow name', 'I am not sure'], correct: 1, feedback: 'Verify using an existing contact method before considering any payment.' },
-  { id: 2, category: 'FAMILY', text: 'The sender refuses a call and says you must keep the transfer secret. What does this suggest?', options: ['It proves the person is genuine', 'Secrecy makes the transfer safer', 'It is a warning sign of impersonation', 'I am not sure'], correct: 2, feedback: 'Secrecy and urgency are warning signs; verify independently.' },
-  { id: 3, category: 'FAMILY', text: 'A relative sends a voice recording asking for money. Is the voice alone enough proof?', options: ['Yes, voices cannot be copied', 'No, verify through a trusted channel', 'Yes, if the message sounds emotional', 'I am not sure'], correct: 1, feedback: 'Audio can be imitated. Confirm requests using a known contact method.' },
-  { id: 4, category: 'BANK', text: 'A caller claiming to be from your bank asks you to disclose an OTP. What should you do?', options: ['Read out the OTP', 'Share only part of the OTP', 'End the call and contact the bank officially', 'I am not sure'], correct: 2, feedback: 'Never share OTPs or passwords. Contact your bank independently.' },
-  { id: 5, category: 'BANK', text: 'Someone instructs you to transfer savings to a “safe account” to protect them. What is the best response?', options: ['Follow the instruction immediately', 'Refuse and verify through the official bank app', 'Send a small test amount', 'I am not sure'], correct: 1, feedback: 'A request to move funds into a supposed safe account is a major warning sign.' },
-  { id: 6, category: 'BANK', text: 'A suspicious message includes a phone number to call back. Which contact method is safest?', options: ['The number in the message', 'A link provided by the caller', 'Contact details you find on the bank’s official website or app', 'I am not sure'], correct: 2, feedback: 'Use contact details independently obtained from official channels.' },
-  { id: 7, category: 'BOSS', text: 'A manager supposedly messages from an unfamiliar number requesting an urgent supplier payment. What should you do?', options: ['Skip approvals to help quickly', 'Verify with the manager via a usual work channel', 'Pay first and ask later', 'I am not sure'], correct: 1, feedback: 'Follow established approval procedures and confirm the sender separately.' },
-  { id: 8, category: 'BOSS', text: 'A payment request asks you not to tell other colleagues. How should you interpret this?', options: ['It is a reason to check more carefully', 'It means the payment is important and safe', 'It replaces the normal approval process', 'I am not sure'], correct: 0, feedback: 'Pressure to keep a payment secret is a warning sign.' },
-  { id: 9, category: 'BOSS', text: 'A supplier suddenly changes their receiving bank account. Which action is safest?', options: ['Use the new account without checking', 'Ask the person in the suspicious email', 'Confirm the change using independently known supplier contact details', 'I am not sure'], correct: 2, feedback: 'Independently verify changes to payment destinations.' }
-];
-
 export function getAwarenessLevel(percentage) {
   if (percentage >= 80) return 'Confident';
   if (percentage >= 50) return 'Developing';
