@@ -27,6 +27,8 @@ import {
   saveRiskAssessment,
 } from "../utils/riskSession";
 
+import { demoRecipients } from "../utils/payNowRecipients";
+
 import "../css/banking-flow.css";
 
 export default function Transfer() {
@@ -34,8 +36,20 @@ export default function Transfer() {
   const location = useLocation();
   const { assess } = useTransactionRisk();
 
-  const [form, setForm] = useState(readDraft);
+  const [form, setForm] = useState(() => {
+    const existing = readDraft();
+
+    return {
+      ...existing,
+      recipientName: "",
+      recipientNumber: existing.id
+        ? existing.recipientNumber
+        : "",
+    };
+  });
+
   const [error, setError] = useState("");
+  const [verifiedRecipient, setVerifiedRecipient] = useState(null);
 
   const saved = getSavedReview(demoCustomer.id);
 
@@ -50,10 +64,72 @@ export default function Transfer() {
     }));
   }
 
+  function changeRecipientNumber(value) {
+    const cleaned = value.replace(/\D/g, "").slice(0, 8);
+
+    if (cleaned !== form.recipientNumber) {
+      invalidateReview();
+
+      setForm((old) => ({
+        ...old,
+        recipientNumber: cleaned,
+        recipientName: "",
+      }));
+
+      setVerifiedRecipient(null);
+      setError("");
+    }
+  }
+
+  function lookupRecipient() {
+    const cleaned = form.recipientNumber.replace(/\D/g, "");
+
+    if (!/^[89]\d{7}$/.test(cleaned)) {
+      setError("Enter a valid 8-digit Singapore mobile number.");
+      setVerifiedRecipient(null);
+      update("recipientName", "");
+      return;
+    }
+
+    const found = demoRecipients[cleaned];
+
+    if (!found) {
+      setError(
+        "This number is not registered in the demo PayNow directory."
+      );
+
+      setVerifiedRecipient(null);
+      update("recipientName", "");
+      return;
+    }
+
+    setVerifiedRecipient({
+      ...found,
+      mobile: cleaned,
+    });
+
+    setForm((old) => ({
+      ...old,
+      recipientNumber: cleaned,
+      recipientName: found.maskedName,
+    }));
+
+    setError("");
+  }
+
   function submit(event) {
     event.preventDefault();
 
     const amount = Number(form.amount);
+
+    if (
+      !verifiedRecipient ||
+      verifiedRecipient.mobile !== form.recipientNumber ||
+      verifiedRecipient.maskedName !== form.recipientName
+    ) {
+      setError("Please verify the recipient before continuing.");
+      return;
+    }
 
     if (
       !form.recipientName.trim() ||
@@ -70,12 +146,8 @@ export default function Transfer() {
       return;
     }
 
-    if (
-      !/^\d{8,16}$/.test(
-        form.recipientNumber.replace(/[\s-]/g, "")
-      )
-    ) {
-      setError("Enter a valid 8–16 digit recipient identifier.");
+    if (!/^[89]\d{7}$/.test(form.recipientNumber)) {
+      setError("Enter a valid 8-digit Singapore mobile number.");
       return;
     }
 
@@ -92,12 +164,17 @@ export default function Transfer() {
         String(previous.recipientNumber).replace(/[\s-]/g, "") ===
         String(form.recipientNumber).replace(/[\s-]/g, "");
 
-      const draft = saveDraft(form);
+      const draft = saveDraft({
+        ...form,
+        transferType: "ecommerce",
+      });
 
-      const riskResult = assess(
-        draft,
-        sameRecipient ? previousRisk?.recipientContext : {}
-      );
+      const riskResult = assess(draft, {
+        ...(sameRecipient
+          ? previousRisk?.recipientContext || {}
+          : {}),
+        isNewRecipient: verifiedRecipient.isNewRecipient,
+      });
 
       saveRiskAssessment(draft, riskResult);
       setError("");
@@ -187,55 +264,108 @@ export default function Transfer() {
           </div>
 
           <div className="flow-form-group">
-            <label htmlFor="recipient-name">Recipient name</label>
+            <label htmlFor="recipient-number">
+              Recipient mobile number
+            </label>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+              }}
+            >
+              <input
+                id="recipient-number"
+                type="tel"
+                value={form.recipientNumber}
+                inputMode="numeric"
+                maxLength={8}
+                placeholder="e.g. 91234567"
+                onChange={(event) =>
+                  changeRecipientNumber(event.target.value)
+                }
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                }}
+                required
+              />
+
+              <button
+                type="button"
+                className="flow-button flow-button-primary"
+                onClick={lookupRecipient}
+              >
+                Verify
+              </button>
+            </div>
+          </div>
+
+          <div className="flow-form-group">
+            <label>Recipient name</label>
+
+            <div
+              className="flow-readonly"
+              aria-live="polite"
+            >
+              {verifiedRecipient ? (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      color: "#16834a",
+                    }}
+                  >
+                    <ShieldCheck size={22} />
+                    Recipient found
+                  </div>
+
+                  <h3
+                    style={{
+                      margin: "12px 0 6px",
+                    }}
+                  >
+                    {verifiedRecipient.maskedName}
+                  </h3>
+
+                  <span>
+                    Partially masked registered recipient name.
+                  </span>
+
+                  <span>
+                    A masked name does not confirm someone's
+                    identity. Verify unexpected payment requests
+                    through a trusted channel.
+                  </span>
+                </>
+              ) : (
+                <span>
+                  Verify the recipient's mobile number first.
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flow-form-group">
+            <label htmlFor="payment-amount">
+              Amount (SGD)
+            </label>
 
             <input
-              id="recipient-name"
-              value={form.recipientName}
-              maxLength={80}
+              id="payment-amount"
+              type="number"
+              min="0.01"
+              max={demoAccount.balance}
+              step="0.01"
+              value={form.amount}
               onChange={(event) =>
-                update("recipientName", event.target.value)
+                update("amount", event.target.value)
               }
               required
             />
-          </div>
-
-          <div className="flow-form-grid">
-            <div className="flow-form-group">
-              <label htmlFor="recipient-number">
-                Recipient account / mobile number
-              </label>
-
-              <input
-                id="recipient-number"
-                value={form.recipientNumber}
-                inputMode="numeric"
-                maxLength={20}
-                onChange={(event) =>
-                  update("recipientNumber", event.target.value)
-                }
-                required
-              />
-            </div>
-
-            <div className="flow-form-group">
-              <label htmlFor="payment-amount">
-                Amount (SGD)
-              </label>
-
-              <input
-                id="payment-amount"
-                type="number"
-                min="0.01"
-                max={demoAccount.balance}
-                step="0.01"
-                value={form.amount}
-                onChange={(event) =>
-                  update("amount", event.target.value)
-                }
-                required
-              />
-            </div>
           </div>
 
           <div className="flow-form-group">

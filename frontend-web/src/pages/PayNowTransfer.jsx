@@ -16,23 +16,7 @@ import { saveDraft } from "../utils/demoSession";
 import { demoAccount } from "../data/demoBanking";
 import { usePaymentBehaviour } from "../context/PaymentBehaviourContext";
 
-// Simulated PayNow directory for prototype testing.
-// The updated shared assessment checks completed outgoing payment
-// history when deciding whether a recipient is first-time.
-const demoRecipients = {
-  91234567: {
-    maskedName: "ALXX TAX",
-    isNewRecipient: false,
-  },
-  87654321: {
-    maskedName: "CHXX LXX",
-    isNewRecipient: true,
-  },
-  82223333: {
-  maskedName: "JAXX LXX",
-  isNewRecipient: true,
-  },
-};
+import { demoRecipients } from "../utils/payNowRecipients";
 
 export default function PayNowTransfer() {
   const [searchParams] = useSearchParams();

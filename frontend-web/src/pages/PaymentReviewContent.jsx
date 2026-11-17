@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import RecipientPaymentHistory from "../components/RecipientPaymentHistory";
 import {
   Link,
   Navigate,
@@ -342,6 +343,7 @@ export default function PaymentReview({ assessment }) {
           </dl>
         </section>
 
+        <RecipientPaymentHistory draft={draft} />
         <section className="flow-panel flow-questions">
           <div className="flow-section-title">
             <div>

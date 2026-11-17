@@ -8,6 +8,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { CircleAlert } from "lucide-react";
 
 import PaymentReviewContent from "./PaymentReviewContent";
+import RecipientPaymentHistory from "../components/RecipientPaymentHistory";
 import useTransactionRisk from "../hooks/useTransactionRisk";
 import { activeDraft } from "../utils/demoSession";
 import { formatSGD, maskIdentifier } from "../utils/banking";
@@ -157,7 +158,7 @@ export default function PaymentReview() {
     }
   }
 
-  if (!assessment) {
+    if (!assessment) {
     return (
       <main className="flow-page">
         <div className="flow-shell flow-narrow">
@@ -182,7 +183,9 @@ export default function PaymentReview() {
                 <button
                   type="button"
                   className="flow-button flow-button-primary"
-                  onClick={() => setRetry((value) => value + 1)}
+                  onClick={() =>
+                    setRetry((value) => value + 1)
+                  }
                 >
                   Retry assessment
                 </button>
@@ -197,6 +200,15 @@ export default function PaymentReview() {
               </button>
             </div>
           </section>
+
+          {currentResult?.error && (
+            <RecipientPaymentHistory
+              draft={draft}
+              onRetry={() =>
+                setRetry((value) => value + 1)
+              }
+            />
+          )}
         </div>
       </main>
     );

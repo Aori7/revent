@@ -14,6 +14,8 @@ import { useSimulator } from "../context/SimulatorContext";
 import usePaymentRestriction from "../utils/usePaymentRestriction";
 import { usePaymentBehaviour } from "../context/PaymentBehaviourContext";
 
+import RecipientPaymentHistory from "../components/RecipientPaymentHistory";
+
 import "../css/banking-flow.css";
 
 export default function PaymentConfirmation() {
@@ -146,6 +148,12 @@ export default function PaymentConfirmation() {
               </dd>
             </div>
           </dl>
+
+          {/* Display previous payments and proposed total
+              regardless of the payment risk level. */}
+          {!confirmed && (
+            <RecipientPaymentHistory draft={draft} />
+          )}
 
           {risk && (
             <div className="confirmation-risk">

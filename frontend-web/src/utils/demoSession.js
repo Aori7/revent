@@ -10,7 +10,7 @@ import {
   defaultAnswers,
   unansweredQuestions,
 } from "./banking.js";
-import { getRiskAssessment } from "./riskSession";
+import { getRiskAssessment } from "./riskSession.js";
 
 const DRAFT = "revent.demo.paymentDraft";
 const REVIEW = "revent.demo.paymentReview";
