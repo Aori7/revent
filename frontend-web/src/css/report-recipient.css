@@ -1,0 +1,88 @@
+.report-recipient-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  margin: 24px 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-left: 5px solid #ed1c24;
+  border-radius: 12px;
+}
+
+.report-recipient-card-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.report-recipient-card-content > svg {
+  color: #ed1c24;
+  flex-shrink: 0;
+}
+
+.report-recipient-card h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.report-recipient-card p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.report-recipient-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: #ed1c24;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.report-recipient-button:hover {
+  background: #c8102e;
+}
+
+/* Fix Report Recipient card on mobile */
+@media (max-width: 600px) {
+  .report-recipient-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  .report-recipient-card-content {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .report-recipient-card-content > div {
+    min-width: 0;
+  }
+
+  .report-recipient-button {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    white-space: normal;
+    text-align: center;
+  }
+}

@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const readinessRoutes = require("./routes/readinessRoutes");
 const learningRoutes = require("./routes/learningRoutes");
 
+
 const {
   testIBMConnection,
   analyseScamMessage,
@@ -25,6 +26,7 @@ app.use(express.json({ limit: "20kb" }));
 
 // Authentication routes
 app.use("/api/auth", authRoutes);
+
 
 // Existing backend homepage
 app.get("/", (req, res) => {
