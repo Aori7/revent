@@ -48,8 +48,7 @@ function Dashboard() {
         </div>
       </section>
 
-      {/* Added by Tiara - Report Suspicious Recipient */}
-      <ReportRecipientCard />
+
 
       {/* Main components for dashboard */}
       <div className="dashboard-grid">
@@ -73,6 +72,8 @@ function Dashboard() {
           <RewardsCard />
         </div>
       </div>
+      {/* Added by Tiara - Report Suspicious Recipient */}
+      <ReportRecipientCard />
     </main>
   );
 }
