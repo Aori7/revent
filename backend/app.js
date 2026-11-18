@@ -6,6 +6,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const readinessRoutes = require("./routes/readinessRoutes");
 const learningRoutes = require("./routes/learningRoutes");
+const rewardsRoutes = require("./routes/rewardsRoutes");
 
 const {
   testIBMConnection,
@@ -127,6 +128,7 @@ app.post("/api/scam/follow-up", async (req, res) => {
 
 app.use("/api/readiness", readinessRoutes);
 app.use("/api/learning", learningRoutes);
+app.use("/api/rewards", rewardsRoutes);
 
 // Return JSON for unknown API routes
 app.use("/api", (req, res) => {
