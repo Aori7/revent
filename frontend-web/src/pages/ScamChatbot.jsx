@@ -11,7 +11,7 @@ import FollowUpQuestions, {
 import "../css/scam-chatbot.css";
 
 // Express backend running on port 5000
-const API_URL = "http://localhost:5000";
+const API_URL = "http://localhost:3000";
 
 // Real IBM analysis is enabled
 const PREVIEW_MODE = false;
