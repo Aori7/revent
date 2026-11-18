@@ -26,12 +26,18 @@ function readJson(key) {
   }
 }
 
+function currentUserId() {
+  return sessionStorage.getItem("reventUserId");
+}
+
 function signedIn() {
-  return sessionStorage.getItem("reventDemoLogin") === "true";
+  return Boolean(
+    sessionStorage.getItem("reventAccessToken") && currentUserId(),
+  );
 }
 
 function owned(record) {
-  return signedIn() && record?.customerId === demoCustomer.id;
+  return signedIn() && record?.customerId === currentUserId();
 }
 
 export function validPayment(draft) {
@@ -113,7 +119,7 @@ export function saveDraft(form) {
 
   const draft = {
     ...form,
-    customerId: demoCustomer.id,
+    customerId: currentUserId(),
     id: old?.id || crypto.randomUUID(),
     version: (old?.version || 0) + Number(changed),
   };
@@ -152,7 +158,7 @@ export function saveAnswers(draft, answers) {
 }
 
 export function saveReviewForLater(customerId, draft, answers) {
-  if (customerId !== demoCustomer.id) {
+  if (customerId !== currentUserId) {
     throw new Error("Access denied.");
   }
 
