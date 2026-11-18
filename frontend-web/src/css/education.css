@@ -148,7 +148,7 @@
 .edu-awareness-summary p { font-size: 15px; color: #646f7f; line-height: 1.55; max-width: 440px; margin: 0 0 21px; }
 .edu-awareness-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
 .edu-awareness-metrics > div { background: white; border: 1px solid var(--edu-border); border-radius: 16px; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
-.edu-awareness-metrics span { color: #6b7484; font-size: 13px; line-height: 1.4; min-height: 37px; }
+.edu-awareness-metrics span { color: #344054; font-size: 16px; font-weight: 600; line-height: 1.5; min-height: 37px; }
 .edu-awareness-metrics strong { font-size: 27px; line-height: 1; }
 .edu-awareness-metrics strong small { font-size: 14px; font-weight: 650; color: #8791a0; }
 .edu-awareness-metrics svg { color: #d01a2a; }
@@ -459,4 +459,102 @@
   .edu-lesson-stage-card.active { padding: 8px; }
   .edu-lesson-stage-card strong { font-size: 12px; }
   .edu-lesson-stage-meta { font-size: 10px; }
+}
+
+/* Learning card selection: distinguish viewing from completion */
+.edu-lesson-page .edu-lesson-stage-card {
+    border-width: 2px;
+    padding: 11px;
+}
+.edu-lesson-page .edu-lesson-stage-card.active {
+    border-color: #c90019;
+    background: #fff1f2;
+    box-shadow: 0 3px 10px rgba(201, 0, 25, .12);
+}
+.edu-lesson-page .edu-lesson-stage-card.active strong,
+.edu-lesson-page .edu-lesson-stage-card.active .edu-lesson-stage-meta {
+    color: #b90f1e;
+}
+.edu-lesson-page .edu-lesson-stage-card.active:not(.done) .edu-lesson-stage-card-top {
+    color: #b90f1e;
+}
+.edu-lesson-viewing {
+    color: #b90f1e;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 3px;
+}
+@media (max-width: 540px) {
+    .edu-lesson-page .edu-lesson-stage-card { padding: 8px; }
+    .edu-lesson-viewing { font-size: 10px; }
+}
+
+/* Desktop and tablet learning experience; keep the mobile stacked layout. */
+@media (min-width: 769px) {
+    .edu-lesson-page { padding: 32px 5% 64px; }
+    .edu-lesson-page .edu-container.edu-lesson-shell {
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    .edu-lesson-page .edu-lesson-back { font-size: 16px; }
+    .edu-lesson-score { margin: 20px 0 24px; }
+    .edu-lesson-score-top > span,
+    .edu-lesson-level,
+    .edu-lesson-score-bottom > span { font-size: 15px; }
+    .edu-lesson-stage-heading { font-size: 21px; margin: 12px 0 14px; }
+    .edu-lesson-stage-grid { gap: 16px; margin-bottom: 20px; }
+    .edu-lesson-page .edu-lesson-stage-card { padding: 18px 20px; gap: 8px; font-size: 15px; }
+    .edu-lesson-stage-card strong { font-size: 18px; }
+    .edu-lesson-stage-meta, .edu-lesson-viewing { font-size: 13px; }
+    .edu-lesson-quiz-note, .edu-lesson-unassessed { font-size: 14px; line-height: 1.55; }
+    .edu-lesson-quiz-note p { margin: 6px 0; }
+    .edu-lesson-page .edu-lesson-bookmark { width: 44px; height: 44px; }
+    .edu-lesson-page .edu-lesson-bookmark:hover { background: #fff0f2; color: #ad1828; }
+    .edu-lesson-page .edu-flip-card {
+        width: 100%;
+        max-width: none;
+        min-height: 0;
+        border: 1px solid var(--edu-border);
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 5px 20px rgba(16,24,40,.045);
+    }
+    .edu-flip-card-heading {
+        min-height: 68px;
+        padding: 20px 28px;
+        border-bottom: 1px solid var(--edu-border);
+    }
+    .edu-flip-card-heading h1 { font-size: 23px; text-decoration: none; }
+    .edu-lesson-media { min-height: 280px; border-radius: 12px; }
+    .edu-lesson-media > span:last-child { font-size: 15px; }
+    .edu-lesson-media-icon svg { width: 52px; height: 52px; }
+    .edu-lesson-content { padding: 28px; gap: 20px; }
+    .edu-lesson-content p { font-size: 17px; line-height: 1.7; margin: 0; }
+    .edu-lesson-page .edu-flip-button { font-size: 15px; min-height: 52px; }
+    .edu-lesson-flags { padding: 28px; min-height: 320px; }
+    .edu-lesson-flags ul { gap: 14px; margin: 0 0 28px; list-style-position: outside; padding-left: 24px; }
+    .edu-lesson-flags li { font-size: 17px; line-height: 1.6; padding-left: 5px; }
+    .edu-lesson-flags-actions { flex-direction: row; flex-wrap: wrap; gap: 14px; }
+    .edu-lesson-flags-actions > * { flex: 1 1 220px; min-width: 0; width: auto; margin-top: 0; }
+    .edu-lesson-page .edu-lesson-finish { min-height: 52px; font-size: 15px; text-decoration: none; color: #a21a2c; }
+    .edu-lesson-note { font-size: 14px; }
+    .edu-lesson-done { min-height: 400px; padding: 54px 24px 32px; }
+    .edu-lesson-done > p:not(.edu-done-percentage), .edu-lesson-milestone p { max-width: 580px; font-size: 16px; }
+    .edu-done-action { max-width: 420px; }
+    .edu-lesson-practice { padding: 32px; }
+}
+@media (min-width: 900px) {
+    /* The existing JSX has a header, media and scenario content as direct children. */
+    .edu-flip-card:has(> .edu-lesson-media) {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        grid-template-rows: auto 1fr;
+    }
+    .edu-flip-card:has(> .edu-lesson-media) > .edu-flip-card-heading { grid-column: 1 / -1; }
+    .edu-flip-card:has(> .edu-lesson-media) > .edu-lesson-media { margin: 24px 0 24px 24px; }
+    .edu-flip-card:has(> .edu-lesson-media) > .edu-lesson-content { padding: 24px; }
+}
+@media (min-width: 769px) and (max-width: 899px) {
+    .edu-flip-card > .edu-lesson-media { margin: 24px 24px 0; }
 }

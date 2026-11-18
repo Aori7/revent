@@ -103,6 +103,12 @@ function Education() {
           </div>
         </section>
 
+        <section className="edu-check-banner">
+          <span className="edu-check-icon"><GraduationCap size={27}/></span>
+          <div><h2>How ready are you to spot an AI-powered scam?</h2><p>Try a short nine-question readiness check to see how you respond to suspicious requests.</p></div>
+          <Link to="/readiness" className="edu-secondary-button">Take a readiness check <ChevronRight size={18}/></Link>
+        </section>
+
         <section className="edu-section edu-awareness-preview" aria-labelledby="edu-preview-heading">
           <div className="edu-section-heading edu-section-heading-inline">
             <div>
@@ -234,11 +240,6 @@ function Education() {
           )}
         </section>
 
-        <section className="edu-check-banner">
-          <span className="edu-check-icon"><GraduationCap size={27}/></span>
-          <div><h2>How ready are you to spot an AI-powered scam?</h2><p>Try a short nine-question readiness check to see how you respond to suspicious requests.</p></div>
-          <Link to="/readiness" className="edu-secondary-button">Take a readiness check <ChevronRight size={18}/></Link>
-        </section>
         <p className="edu-demo-note">Educational prototype with fictional examples. Awareness results, bookmarks and learning progress are saved to your account.</p>
       </div>
     </main>

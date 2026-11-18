@@ -33,6 +33,7 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted,
 
   const currentIndex = LEARNING_STAGES.indexOf(currentTier);
   const nextTier = LEARNING_STAGES[currentIndex + 1];
+  const isReviewing = completedStages.includes(currentTier);
   const progress = Math.round((completedCount / LEARNING_STAGES.length) * 100);
 
   const scenarioSet = lessonScenarios[topic.id];
@@ -49,10 +50,6 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted,
   const isAssessedCategory = awarenessCategories.some(item => item.code === topic.categoryCode);
   const assessedPercentage = assessment?.percentage ?? null;
   const assessedLevel = awarenessLabels[assessment?.level] || null;
-  const recommendedIndex = LEARNING_STAGES.indexOf(assessedLevel);
-  const recommendationUnlocked = recommendedIndex >= 0 && (
-    recommendedIndex === 0 || completedStages.includes(LEARNING_STAGES[recommendedIndex - 1])
-  );
 
   function showCard(tier) {
     const index = LEARNING_STAGES.indexOf(tier);
@@ -64,6 +61,7 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted,
   }
 
   async function finishCard() {
+    if (isReviewing || isUpdating) return;
     const success = await markStageCompleted(topic.id, currentTier);
     if (success) {
       setScreen(currentTier === 'Confident' ? 'complete' : 'milestone');
@@ -120,6 +118,14 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted,
                     </span>
                     <strong>{tier}</strong>
                     <span className="edu-lesson-stage-meta">{done ? 'Completed' : locked ? 'Finish previous' : tier === currentTier ? 'In progress' : 'Ready'}</span>
+                    {tier === currentTier && (
+                        <span className="edu-lesson-viewing">
+                            Currently viewing
+                        </span>
+                    )}
+                    {!awarenessLoading && !awarenessError && tier === assessedLevel && (
+                      <span className="edu-lesson-stage-meta" style={{ fontWeight: 600 }}>Recommended</span>
+                    )}
                   </button>
                 );
               })}
@@ -140,15 +146,6 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted,
                   <p>Your readiness-check awareness level: <strong>{assessedLevel}</strong>.
                     {assessedPercentage != null && <> Latest category score: <strong>{assessedPercentage}%</strong>.</>}
                   </p>
-                  {!recommendationUnlocked && (
-                    <p>Complete the earlier cards to unlock your recommended card.</p>
-                  )}
-                  <p>Recommended card: <strong>{assessedLevel}</strong>.</p>
-                  {recommendationUnlocked && currentTier !== assessedLevel && (screen === 'scenario' || screen === 'redFlags') ? (
-                    <button type="button" className="edu-flip-button" disabled={isUpdating} onClick={() => showCard(assessedLevel)}>
-                      Open recommended {assessedLevel} card <ArrowRight size={18}/>
-                    </button>
-                  ) : null}
                   <p>Your awareness level stays separate from learning-card completion.</p>
                 </div>
               ) : (
@@ -186,9 +183,21 @@ function LearningCardLesson({ topic, learning, toggleSaved, markStageCompleted,
                 <div className="edu-lesson-flags">
                   <ul>{scenario.redFlags.map((flag) => <li key={flag}>{flag}</li>)}</ul>
                   <div className="edu-lesson-flags-actions">
-                    <button className="edu-lesson-finish" type="button" disabled={isUpdating} onClick={finishCard}>
-                      Complete Card {currentIndex + 1} <CheckCircle2 size={17}/>
-                    </button>
+                    {isReviewing ? (
+                      nextTier ? (
+                        <button className="edu-lesson-finish" type="button" disabled={isUpdating} onClick={() => showCard(nextTier)}>
+                          Continue to Card {currentIndex + 2} <ArrowRight size={17}/>
+                        </button>
+                      ) : (
+                        <Link className="edu-lesson-finish" to="/education" style={{ textDecoration: 'none' }}>
+                          Back to learning cards <ArrowRight size={17}/>
+                        </Link>
+                      )
+                    ) : (
+                      <button className="edu-lesson-finish" type="button" disabled={isUpdating} onClick={finishCard}>
+                        Complete Card {currentIndex + 1} <CheckCircle2 size={17}/>
+                      </button>
+                    )}
                     <button type="button" className="edu-flip-button" disabled={isUpdating} onClick={() => setScreen('scenario')}>
                       <ChevronLeft size={18}/> Tap to look back at the scenario
                     </button>
