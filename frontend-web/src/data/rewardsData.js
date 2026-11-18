@@ -35,23 +35,23 @@ export const rewardCatalog = [
   }
 ];
 
-export const starterVouchers = [
-  { id: 'demo-voucher-1', catalogId: 'fairprice-5', status: 'available', redeemedAt: '2026-11-10T10:00:00+08:00', expiresAt: '2026-12-10T10:00:00+08:00', code: 'DEMO-FAIRPRICE-001' },
-  { id: 'demo-voucher-2', catalogId: 'transport-5', status: 'available', redeemedAt: '2026-11-09T10:00:00+08:00', expiresAt: '2026-12-09T10:00:00+08:00', code: 'DEMO-TRANSPORT-002' },
-  { id: 'demo-voucher-3', catalogId: 'coffee-2', status: 'available', redeemedAt: '2026-11-08T10:00:00+08:00', expiresAt: '2026-12-08T10:00:00+08:00', code: 'DEMO-COFFEE-003' },
-  { id: 'demo-voucher-4', catalogId: 'transport-5', status: 'used', redeemedAt: '2026-10-24T10:00:00+08:00', expiresAt: '2026-11-23T10:00:00+08:00', usedAt: '2026-10-26T12:00:00+08:00', code: 'DEMO-TRANSPORT-004' },
-  { id: 'demo-voucher-5', catalogId: 'coffee-2', status: 'expired', redeemedAt: '2026-09-01T10:00:00+08:00', expiresAt: '2026-10-01T10:00:00+08:00', code: 'DEMO-COFFEE-005' }
-];
-
-export const starterActivities = [
-  { id: 'seed-earn', type: 'earned', title: 'Completed: Family Emergency Scenario', points: 10, at: '2026-11-04T11: :00+08:00' },
-  { id: 'seed-redeem', type: 'redeemed', title: 'Redeemed: $5 FairPrice Voucher', points: -200, at: '2026-11-04T10:00:00+08:00' }
-];
-
 export const earnPointTasks = [
-  { id: 'learning', title: 'Complete a learning card', description: 'Explore a scam scenario and reveal its red flags', points: 10, path: '/education', linkText: 'Explore learning cards' },
-  { id: 'practice', title: 'Practise scam spotting', description: 'Try a short scam-awareness practice check', points: null, path: '/readiness', linkText: 'Try readiness check' },
-  { id: 'awareness', title: 'Review your awareness', description: 'See which AI-powered scam topics need more practice', points: null, path: '/awareness', linkText: 'View awareness levels' }
+  {
+    id: 'learning',
+    title: 'Complete a learning card',
+    description: 'Explore a scam scenario and reveal its red flags',
+    points: 10,
+    path: '/education',
+    linkText: 'Explore learning cards'
+  },
+  {
+    id: 'practice',
+    title: 'Complete the readiness check',
+    description: 'Assess your ability to recognise AI-powered scams',
+    points: 5,
+    path: '/readiness',
+    linkText: 'Try readiness check'
+  }
 ];
 
 export const getRewardById = (id) => rewardCatalog.find((reward) => reward.id === id);

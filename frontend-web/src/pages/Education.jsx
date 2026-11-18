@@ -112,7 +112,6 @@ function Education() {
         <section className="edu-section edu-awareness-preview" aria-labelledby="edu-preview-heading">
           <div className="edu-section-heading edu-section-heading-inline">
             <div>
-              <span className="edu-section-eyebrow">YOUR LEARNING JOURNEY</span>
               <h2 id="edu-preview-heading">Your scam awareness levels</h2>
               <p>{awarenessLoading
                 ? 'Retrieving your awareness levels...'
