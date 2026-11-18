@@ -11,6 +11,8 @@ import Navbar from "./components/navbar";
 import Dashboard from "./components/dashboard";
 import MobileNavbar from "./components/MobileNavbar";
 
+import ReportSuspiciousRecipient from "./pages/ReportSuspiciousRecipient"; // added by tiara
+
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Accounts from "./pages/Accounts";
@@ -103,6 +105,10 @@ export default function App() {
               element={<TransactionReview />}
             /> */}
 
+              <Route
+              path="/report-suspicious-recipient"
+              element={<ReportSuspiciousRecipient />}
+            /> 
             <Route
               path="/transfer/confirmation"
               element={<PaymentConfirmation />}

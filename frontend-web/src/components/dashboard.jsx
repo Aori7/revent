@@ -1,5 +1,7 @@
+
 import "../css/dashboard.css";
 import "../css/everyday-banking.css";
+
 import EverydayBanking from "./dashboard/EverydayBanking";
 import AccountCard from "./dashboard/AccountCard";
 import YourCards from "./dashboard/YourCards";
@@ -7,8 +9,11 @@ import RecentTransactions from "./dashboard/RecentTransactions";
 import SecurityCard from "./dashboard/SecurityCard";
 import RewardsCard from "./dashboard/RewardsCard";
 
+// Added by Tiara - Report Suspicious Recipient
+import ReportRecipientCard from "./dashboard/ReportRecipientCard";
+
 function Dashboard() {
-  // temporary data until we connect our database
+  // Temporary data until we connect our database
   const account = {
     type: "REVENT Savings Account",
     accountNumber: "987-545678-876",
@@ -42,14 +47,19 @@ function Dashboard() {
           <EverydayBanking />
         </div>
       </section>
-      {/* main components for dashboard */}
+
+
+
+      {/* Main components for dashboard */}
       <div className="dashboard-grid">
         <div className="dashboard-cards">
           <YourCards />
         </div>
+
         <div className="dashboard-account">
           <AccountCard account={account} />
         </div>
+
         <div className="dashboard-transactions">
           <RecentTransactions />
         </div>
@@ -62,6 +72,8 @@ function Dashboard() {
           <RewardsCard />
         </div>
       </div>
+      {/* Added by Tiara - Report Suspicious Recipient */}
+      <ReportRecipientCard />
     </main>
   );
 }
