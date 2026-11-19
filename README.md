@@ -34,7 +34,7 @@ Try REVENT directly in your web browser using the hosted application.
 
 | Credential | Details |
 | --- | --- |
-| Access Code | 100009` |
+| Access Code | 100009 |
 | PIN | 123456 |
 
 ### How to Access REVENT
