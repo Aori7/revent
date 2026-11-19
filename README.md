@@ -87,25 +87,6 @@ code .
 
 ```text
 revent-simulator/
-├── backend/
-│   ├── app.js
-│   ├── controllers/
-│   ├── routes/
-│   ├── config/
-│   ├── package.json
-│   └── .env                 # Local file; never commit
-├── frontend-web/
-│   ├── public/
-│   │   └── rewardImages/     # Voucher artwork
-│   ├── src/
-│   ├── package.json
-│   └── .env                 # Only if required by the frontend
-├── supabase/                 # Database migrations, where maintained
-└── README.md
-```
-
-```text
-revent-simulator/
 ├── .gitignore                       # Excludes credentials and generated files
 ├── README.md                        # Project overview, demo access and setup guide
 │
