@@ -47,8 +47,6 @@ Alternatively, register your own account if you would like a separate learning e
 
 The demo account is shared, so its learning progress. Use fictional information only and do not enter real banking credentials or sensitive personal data.
 
-> Deployment link and demo credentials will be updated once the hosted application and dedicated demo account are ready.
-
 ## Tech Stack
 
 | Layer | Technology |
