@@ -157,7 +157,6 @@ Create a file named `.env` inside the `backend` directory. Obtain the approved c
 The following is an illustrative template, not a verified list of every variable in the current branch. Replace placeholders with the team's values and use the exact names expected by the checked-out code. 
 
 ```dotenv
-PORT=3000
 
 # Supabase
 SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
