@@ -1,12 +1,7 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { CircleAlert } from "lucide-react";
-
+import { ShieldAlert } from "lucide-react";
 import PaymentReviewContent from "./PaymentReviewContent";
 import RecipientPaymentHistory from "../components/RecipientPaymentHistory";
 import useTransactionRisk from "../hooks/useTransactionRisk";
@@ -27,6 +22,7 @@ import "../css/payment-review-popup.css";
 
 export default function PaymentReview() {
   const navigate = useNavigate();
+  const [needsHelp, setNeedsHelp] = useState(false);
   const { assess } = useTransactionRisk();
   const restriction = usePaymentRestriction();
 
@@ -158,14 +154,11 @@ export default function PaymentReview() {
     }
   }
 
-    if (!assessment) {
+  if (!assessment) {
     return (
       <main className="flow-page">
         <div className="flow-shell flow-narrow">
-          <section
-            className="flow-panel"
-            aria-busy={!currentResult?.error}
-          >
+          <section className="flow-panel" aria-busy={!currentResult?.error}>
             <h1>
               {currentResult?.error
                 ? "Payment check unavailable"
@@ -183,9 +176,7 @@ export default function PaymentReview() {
                 <button
                   type="button"
                   className="flow-button flow-button-primary"
-                  onClick={() =>
-                    setRetry((value) => value + 1)
-                  }
+                  onClick={() => setRetry((value) => value + 1)}
                 >
                   Retry assessment
                 </button>
@@ -204,9 +195,7 @@ export default function PaymentReview() {
           {currentResult?.error && (
             <RecipientPaymentHistory
               draft={draft}
-              onRetry={() =>
-                setRetry((value) => value + 1)
-              }
+              onRetry={() => setRetry((value) => value + 1)}
             />
           )}
         </div>
@@ -217,10 +206,7 @@ export default function PaymentReview() {
   return (
     <>
       <div ref={contentRef}>
-        <PaymentReviewContent
-          key={key}
-          assessment={assessment}
-        />
+        <PaymentReviewContent key={key} assessment={assessment} />
       </div>
 
       <dialog
@@ -234,42 +220,50 @@ export default function PaymentReview() {
         }}
       >
         <div className="payment-review-popup__body">
-          <span
-            className="payment-review-popup__icon"
-            aria-hidden="true"
-          >
-            <CircleAlert size={34} />
-          </span>
+          <div className="payment-review-popup__icon">
+            <ShieldAlert size={36} />
+          </div>
 
           <h2 id="payment-review-popup-title">
             {firstTimeRecipient
-              ? "First payment to this recipient"
+              ? "Wait. Do you know who you're paying?"
               : "Pause before you pay"}
           </h2>
 
-          <p id="payment-review-popup-description">
-            You’re sending {formatSGD(draft.amount)} to{" "}
-            {draft.recipientName} (
-            {maskIdentifier(draft.recipientNumber)}).
+          <p
+            id="payment-review-popup-description"
+            className="payment-review-popup__subtitle"
+          >
             {firstTimeRecipient
-              ? " There is no completed outgoing payment to this recipient in your payment history. Check their identity and the payment request before continuing."
-              : " Check the recipient and payment request before continuing."}
+              ? "You've never paid this recipient before."
+              : "This payment needs an extra safety check."}
           </p>
 
-          <ul className="payment-review-popup__reasons">
-            {firstTimeRecipient ? (
-              <li>
-                Verify the request using a trusted contact number,
-                especially if it came through a voice or video call.
-              </li>
-            ) : (
-              assessment.reasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))
-            )}
-          </ul>
+          <div className="payment-review-popup__transaction">
+            <span>YOU'RE ABOUT TO SEND</span>
 
-          {actionError && <p role="alert">{actionError}</p>}
+            <strong>{formatSGD(draft.amount)}</strong>
+
+            <p>
+              To <b>{draft.recipientName}</b>
+              <span> ({maskIdentifier(draft.recipientNumber)})</span>
+            </p>
+          </div>
+
+          <div className="payment-review-popup__question">
+            <h3>Have you verified this recipient's identity independently?</h3>
+
+            <p>
+              For example, by contacting them through a number you already
+              trust.
+            </p>
+          </div>
+
+          {actionError && (
+            <p className="payment-review-popup__error" role="alert">
+              {actionError}
+            </p>
+          )}
 
           <div className="payment-review-popup__actions">
             <button
@@ -277,17 +271,45 @@ export default function PaymentReview() {
               className="payment-review-popup__primary"
               onClick={openReview}
             >
-              Review payment
+              No, help me check
             </button>
 
             <button
               type="button"
               className="payment-review-popup__secondary"
+              onClick={openReview}
+            >
+              Yes, I've verified
+            </button>
+
+            <button
+              type="button"
+              className="payment-review-popup__cancel"
               onClick={goBack}
             >
               Go back
             </button>
           </div>
+
+          {needsHelp && (
+            <div className="payment-review-popup__help" role="status">
+              <h3>Here's how to verify safely</h3>
+
+              <p>
+                Contact the recipient using a phone number or official website
+                you found yourself. Don't rely on contact details provided in a
+                suspicious message.
+              </p>
+
+              <button
+                type="button"
+                className="payment-review-popup__primary"
+                onClick={openReview}
+              >
+                Continue to safety review
+              </button>
+            </div>
+          )}
         </div>
       </dialog>
     </>

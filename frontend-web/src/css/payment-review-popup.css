@@ -1,86 +1,142 @@
 .payment-review-popup {
   box-sizing: border-box;
-  width: min(420px, calc(100% - 32px));
+  width: min(440px, calc(100% - 32px));
   max-height: calc(100dvh - 32px);
   margin: auto;
   padding: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
-  border: 0;
-  border-radius: 20px;
-  background: #fff;
+  border: none;
+  border-radius: 22px;
+  background: #ffffff;
   color: #242124;
-  box-shadow: 0 20px 64px rgb(25 14 18 / 24%);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
 }
 
 .payment-review-popup::backdrop {
-  background: rgb(27 24 28 / 58%);
+  background: rgba(18, 18, 25, 0.65);
+  backdrop-filter: blur(4px);
 }
 
 .payment-review-popup__body {
-  padding: clamp(22px, 5vw, 32px);
+  padding: 30px;
+  text-align: center;
 }
 
+/* Warning icon */
+
 .payment-review-popup__icon {
-  display: grid;
-  width: 58px;
-  height: 58px;
-  margin-bottom: 18px;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
   border-radius: 50%;
-  background: #fff0f0;
+  background: #fff0ef;
   color: #b42130;
 }
 
+/* Heading */
+
 .payment-review-popup h2 {
   margin: 0 0 10px;
-  color: #291d20;
-  font-size: clamp(1.5rem, 4vw, 1.8rem);
+  font-size: clamp(24px, 5vw, 29px);
+  font-weight: 750;
   line-height: 1.2;
+  color: #242124;
 }
 
-.payment-review-popup p {
+.payment-review-popup__subtitle {
+  margin: 0 0 24px;
+  color: #667085;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Transaction details */
+
+.payment-review-popup__transaction {
+  padding: 22px 16px;
+  margin-bottom: 24px;
+  border-radius: 14px;
+  background: #f8f9fb;
+}
+
+.payment-review-popup__transaction > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+}
+
+.payment-review-popup__transaction strong {
+  display: block;
+  color: #b42130;
+  font-size: clamp(28px, 6vw, 34px);
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.payment-review-popup__transaction p {
+  margin: 10px 0 0;
+  color: #475467;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.payment-review-popup__transaction b {
+  color: #242124;
+}
+
+/* Verification question */
+
+.payment-review-popup__question {
+  margin-bottom: 24px;
+}
+
+.payment-review-popup__question h3 {
+  margin: 0 0 8px;
+  color: #242124;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.payment-review-popup__question p {
   margin: 0;
-  color: #565159;
-  font-size: 1rem;
+  color: #667085;
+  font-size: 13px;
   line-height: 1.5;
 }
 
-.payment-review-popup__reasons {
-  margin: 18px 0 0;
-  padding: 14px 16px 14px 34px;
-  border-inline-start: 3px solid #b42130;
-  border-radius: 8px;
-  background: #fff4f3;
-  color: #60252c;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  list-style: disc;
-}
-
-.payment-review-popup__reasons li + li {
-  margin-top: 4px;
-}
+/* Buttons */
 
 .payment-review-popup__actions {
-  display: grid;
-  gap: 8px;
-  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.payment-review-popup__actions button {
-  min-height: 46px;
-  padding: 10px 16px;
+.payment-review-popup__actions button,
+.payment-review-popup__help button {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
   border-radius: 10px;
   font: inherit;
+  font-size: 15px;
   font-weight: 650;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .payment-review-popup__primary {
-  border: 1px solid #ac202f;
-  background: #ac202f;
-  color: #fff;
+  border: 1px solid #b42130;
+  background: #b42130;
+  color: #ffffff;
 }
 
 .payment-review-popup__primary:hover {
@@ -88,16 +144,72 @@
 }
 
 .payment-review-popup__secondary {
-  border: 1px solid #ddd5d7;
-  background: #fff;
-  color: #40383b;
+  border: 1px solid #d0d5dd;
+  background: #ffffff;
+  color: #344054;
 }
 
 .payment-review-popup__secondary:hover {
-  background: #faf6f6;
+  background: #f9fafb;
 }
 
-.payment-review-popup__actions button:focus-visible {
-  outline: 3px solid #703646;
+.payment-review-popup__cancel {
+  border: none;
+  background: transparent;
+  color: #667085;
+}
+
+.payment-review-popup__cancel:hover {
+  background: #f2f4f7;
+}
+
+.payment-review-popup button:focus-visible {
+  outline: 3px solid #b42130;
   outline-offset: 3px;
+}
+
+/* Verification guidance */
+
+.payment-review-popup__help {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff5f4;
+  text-align: left;
+}
+
+.payment-review-popup__help h3 {
+  margin: 0 0 8px;
+  color: #841b27;
+  font-size: 16px;
+}
+
+.payment-review-popup__help p {
+  margin: 0 0 16px;
+  color: #475467;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.payment-review-popup__error {
+  margin-bottom: 12px;
+  color: #b42130;
+  font-size: 14px;
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .payment-review-popup__body {
+    padding: 24px 20px;
+  }
+
+  .payment-review-popup__icon {
+    width: 62px;
+    height: 62px;
+  }
+
+  .payment-review-popup__transaction {
+    padding: 18px 12px;
+  }
 }

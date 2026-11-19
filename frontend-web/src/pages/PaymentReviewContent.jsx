@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import RecipientPaymentHistory from "../components/RecipientPaymentHistory";
-import {
-  Link,
-  Navigate,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -25,6 +20,7 @@ import {
   visibleQuestions,
   unansweredQuestions,
   generatePaymentAdvice,
+  calculatePaymentRisk,
 } from "../utils/banking";
 import {
   activeDraft,
@@ -34,15 +30,12 @@ import {
   saveAnswers,
   saveReviewForLater,
 } from "../utils/demoSession";
-import {
-  getRiskAssessment,
-  hasAcknowledgedAlert,
-} from "../utils/riskSession";
+import { getRiskAssessment, hasAcknowledgedAlert } from "../utils/riskSession";
 import usePaymentRestriction from "../utils/usePaymentRestriction";
 
 import "../css/banking-flow.css";
 import "../css/payment-review-notice.css";
-
+import "../css/guided-check.css";
 const yesNo = [
   ["yes", "Yes"],
   ["no", "No"],
@@ -110,6 +103,7 @@ export default function PaymentReview({ assessment }) {
   const [draft] = useState(activeDraft);
   const [answers, setAnswers] = useState(() => readAnswers(draft));
   const [showSummary, setShowSummary] = useState(false);
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [missing, setMissing] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
@@ -154,12 +148,10 @@ export default function PaymentReview({ assessment }) {
     if (unanswered.length > 0) {
       setShowSummary(false);
 
-      document
-        .getElementById(`question-${unanswered[0]}`)
-        ?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
+      document.getElementById(`question-${unanswered[0]}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
 
       return;
     }
@@ -191,8 +183,7 @@ export default function PaymentReview({ assessment }) {
 
         setSaveMessage({
           type: "success",
-          text:
-            "Review saved for this browser session. Resume it from Transfer & Pay.",
+          text: "Review saved for this browser session. Resume it from Transfer & Pay.",
         });
       } catch {
         setSaveMessage({
@@ -212,12 +203,9 @@ export default function PaymentReview({ assessment }) {
 
       if (
         current?.canProceedToConfirmation !== true ||
-        (current.conditions?.firstTimeRecipient &&
-          !hasAcknowledgedAlert(draft))
+        (current.conditions?.firstTimeRecipient && !hasAcknowledgedAlert(draft))
       ) {
-        throw new Error(
-          "Review the current payment check before continuing."
-        );
+        throw new Error("Review the current payment check before continuing.");
       }
 
       completeReview(draft, answers);
@@ -251,17 +239,42 @@ export default function PaymentReview({ assessment }) {
     return <Navigate to="/transfer" replace />;
   }
 
-  const reasons = Array.isArray(assessment?.reasons)
-    ? assessment.reasons
-    : [];
+  const reasons = Array.isArray(assessment?.reasons) ? assessment.reasons : [];
 
   const visibleIds = visibleQuestions(answers);
   const visible = questions.filter((question) =>
-    visibleIds.includes(question.id)
+    visibleIds.includes(question.id),
   );
+  const safeIndex = Math.min(questionIndex, Math.max(visible.length - 1, 0));
 
+  const currentQuestion = visible[safeIndex];
+
+  const answeredCount = visible.filter((question) =>
+    Boolean(answers[question.id]),
+  ).length;
+
+  const progressPercent = visible.length
+    ? (answeredCount / visible.length) * 100
+    : 0;
+
+  function nextQuestion() {
+    if (!currentQuestion || !answers[currentQuestion.id]) {
+      setMissing(currentQuestion ? [currentQuestion.id] : []);
+      return;
+    }
+
+    setMissing([]);
+
+    if (safeIndex < visible.length - 1) {
+      setQuestionIndex(safeIndex + 1);
+    } else {
+      generateSummary();
+    }
+  }
   const advice = showSummary ? generatePaymentAdvice(answers) : null;
-
+  const riskScore = showSummary
+    ? calculatePaymentRisk(answers, assessment)
+    : null;
   return (
     <main className="flow-page">
       <div className="flow-shell flow-narrow">
@@ -274,38 +287,43 @@ export default function PaymentReview({ assessment }) {
           Edit payment details
         </button>
 
-        <aside
-          className="payment-review-notice"
-          aria-labelledby="payment-review-notice-title"
-        >
-          <span
-            className="payment-review-notice__icon"
-            aria-hidden="true"
-          >
-            <CircleAlert size={26} strokeWidth={2.5} />
-          </span>
+<aside
+  className="payment-review-notice"
+  aria-labelledby="payment-review-notice-title"
+>
+  <div className="payment-review-notice__top">
+    <div className="payment-review-notice__icon">
+      <ShieldAlert size={28} strokeWidth={2.5} />
+    </div>
 
-          <div>
-            <strong id="payment-review-notice-title">
-              Pause before you pay
-            </strong>
+    <div className="payment-review-notice__content">
+      <span className="payment-review-notice__label">
+        REVENT SECURITY ALERT
+      </span>
 
-            {reasons.length > 0 ? (
-              <>
-                <p>This payment needs a closer look:</p>
-                <ul>
-                  {reasons.map((reason) => (
-                    <li key={reason}>{reason}</li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <p>
-                Check the recipient and amount before confirming this payment.
-              </p>
-            )}
-          </div>
-        </aside>
+      <h2 id="payment-review-notice-title">
+        {assessment?.conditions?.firstTimeRecipient
+          ? `You've never paid ${draft.recipientName} before.`
+          : `Let's double-check your payment to ${draft.recipientName}.`}
+      </h2>
+
+      <p>
+        You're about to send{" "}
+        <strong>{formatSGD(draft.amount)}</strong>.
+      </p>
+    </div>
+  </div>
+
+  <div className="payment-review-notice__tip">
+    <ShieldCheck size={20} />
+
+    <span>
+      {assessment?.conditions?.firstTimeRecipient
+        ? "Know who you're paying? Verify their identity first."
+        : "Make sure you recognise this payment request."}
+    </span>
+  </div>
+</aside>
 
         <div className="flow-page-heading">
           <div>
@@ -321,9 +339,7 @@ export default function PaymentReview({ assessment }) {
             <span className="flow-tag">Read-only</span>
           </div>
 
-          <p className="flow-payment-amount">
-            {formatSGD(draft.amount)}
-          </p>
+          <p className="flow-payment-amount">{formatSGD(draft.amount)}</p>
 
           <dl className="flow-detail-list">
             <div className="flow-detail-row">
@@ -344,173 +360,229 @@ export default function PaymentReview({ assessment }) {
         </section>
 
         <RecipientPaymentHistory draft={draft} />
-        <section className="flow-panel flow-questions">
+        <section
+          className="flow-panel flow-questions guided-check"
+          aria-labelledby="guided-check-title"
+        >
           <div className="flow-section-title">
             <div>
               <span className="flow-eyebrow">GUIDED CHECK</span>
-              <h2>Help Us Understand This Payment</h2>
+
+              <h2 id="guided-check-title">Let's check this payment</h2>
             </div>
 
-            <ShieldCheck size={27} className="flow-red" />
+            <ShieldCheck size={28} className="flow-red" aria-hidden="true" />
           </div>
 
-          <p className="flow-muted">
-            Your answers help highlight potential warning signs.
-            Additional questions appear when relevant.
-          </p>
-
-          {visible.map((question, index) => (
-            <fieldset
-              key={question.id}
-              id={`question-${question.id}`}
-              className={`flow-question ${
-                missing.includes(question.id)
-                  ? "flow-question-error"
-                  : ""
-              }`}
-            >
-              <legend>
-                <span className="flow-question-number">
-                  {index + 1}
+          {!showSummary && currentQuestion && (
+            <>
+              {/* Progress indicator */}
+              <div className="guided-check__progress-heading">
+                <span>
+                  Question {safeIndex + 1} of {visible.length}
                 </span>
-                {question.label}
-              </legend>
 
-              {question.description && (
-                <p className="flow-muted">
-                  {question.description}
-                </p>
-              )}
-
-              <div className="flow-options">
-                {question.options.map(([value, label]) => (
-                  <label
-                    key={value}
-                    className={`flow-option ${
-                      answers[question.id] === value
-                        ? "selected"
-                        : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name={question.id}
-                      value={value}
-                      checked={answers[question.id] === value}
-                      onChange={() =>
-                        answerQuestion(question.id, value)
-                      }
-                    />
-                    <span>{label}</span>
-                  </label>
-                ))}
+                <span>{answeredCount} answered</span>
               </div>
 
-              {missing.includes(question.id) && (
-                <p className="flow-inline-error">
-                  Please select an answer.
-                </p>
-              )}
-            </fieldset>
-          ))}
-
-          <div className="flow-review-actions">
-            <button
-              type="button"
-              className="flow-button flow-button-primary"
-              onClick={generateSummary}
-            >
-              Generate my safety summary
-              <ArrowRight size={18} />
-            </button>
-
-            <p className="flow-muted">
-              Answer all visible questions to generate your safety summary.
-            </p>
-          </div>
-        </section>
-
-        {advice && (
-          <section className="flow-panel flow-results">
-            <div className="flow-section-title">
-              <div>
-                <span className="flow-eyebrow">YOUR REVIEW</span>
-                <h2>Suggested Verification Steps</h2>
+              <div
+                className="guided-check__progress"
+                role="progressbar"
+                aria-label="Guided check completion"
+                aria-valuenow={answeredCount}
+                aria-valuemin={0}
+                aria-valuemax={visible.length}
+              >
+                <div
+                  style={{
+                    width: `${progressPercent}%`,
+                  }}
+                />
               </div>
 
-              {advice.needsExtraCare ? (
-                <ShieldAlert size={29} className="flow-red" />
-              ) : (
-                <ShieldCheck size={29} className="flow-credit" />
-              )}
-            </div>
+              {/* Current question */}
+              <fieldset
+                key={currentQuestion.id}
+                id={`question-${currentQuestion.id}`}
+                className="guided-check__question"
+              >
+                <legend>{currentQuestion.label}</legend>
 
-            <div
-              className={`flow-risk-note ${
-                advice.needsExtraCare
-                  ? "flow-risk-warning"
-                  : "flow-risk-neutral"
-              }`}
-            >
-              {advice.needsExtraCare ? (
-                <CircleAlert size={22} />
-              ) : (
-                <Info size={22} />
-              )}
+                {currentQuestion.description && (
+                  <p className="guided-check__hint">
+                    {currentQuestion.description}
+                  </p>
+                )}
 
-              <div>
-                <strong>
-                  {advice.needsExtraCare
-                    ? "Potential concerns identified"
-                    : "No specific warning signs identified from your answers"}
-                </strong>
+                {/* Answer options */}
+                <div className="guided-check__options">
+                  {currentQuestion.options.map(([value, label]) => (
+                    <label
+                      key={value}
+                      className={`guided-check__option ${
+                        answers[currentQuestion.id] === value
+                          ? "guided-check__option--selected"
+                          : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={currentQuestion.id}
+                        value={value}
+                        checked={answers[currentQuestion.id] === value}
+                        onChange={() =>
+                          answerQuestion(currentQuestion.id, value)
+                        }
+                      />
 
-                <p>
-                  This is guidance only. It cannot establish whether
-                  the payment is safe.
-                </p>
-              </div>
-            </div>
-
-            {advice.concerns.length > 0 && (
-              <>
-                <h3>Things to Watch Out For</h3>
-
-                <ul className="flow-advice-list">
-                  {advice.concerns.map((concern) => (
-                    <li key={concern}>{concern}</li>
+                      <span>{label}</span>
+                    </label>
                   ))}
-                </ul>
-              </>
-            )}
+                </div>
 
-            <h3>Before You Decide</h3>
+                {missing.includes(currentQuestion.id) && (
+                  <p className="flow-inline-error" role="alert">
+                    Choose an answer to continue.
+                  </p>
+                )}
+              </fieldset>
 
-            <ol className="flow-advice-list">
-              {advice.steps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
+              {/* Navigation */}
+              <div className="guided-check__navigation">
+                <button
+                  type="button"
+                  className="flow-button flow-button-secondary"
+                  disabled={safeIndex === 0}
+                  onClick={() => {
+                    setQuestionIndex(safeIndex - 1);
+                    setMissing([]);
+                  }}
+                >
+                  <ArrowLeft size={18} />
+                  Back
+                </button>
 
-            <div className="flow-review-actions">
+                <button
+                  type="button"
+                  className="flow-button flow-button-primary"
+                  disabled={!answers[currentQuestion.id]}
+                  onClick={nextQuestion}
+                >
+                  {safeIndex === visible.length - 1
+                    ? "See my safety summary"
+                    : "Next question"}
+
+                  <ArrowRight size={18} />
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Completed questionnaire */}
+          {showSummary && (
+            <div className="guided-check__complete">
+              <CheckCircle2 size={30} className="flow-credit" />
+
+              <h3>Check complete!</h3>
+
+              <p>
+                You've answered {visible.length} questions. Review your
+                personalised guidance below.
+              </p>
+
               <button
                 type="button"
-                className="flow-button flow-button-primary"
-                disabled={
-                  Boolean(restriction) ||
-                  assessment?.canProceedToConfirmation !== true
-                }
-                onClick={finishReview}
+                className="flow-button flow-button-secondary"
+                onClick={() => {
+                  setShowSummary(false);
+                  setQuestionIndex(0);
+                }}
               >
-                Continue to confirmation
-                <CheckCircle2 size={18} />
+                Review my answers
               </button>
             </div>
+          )}
+        </section>
+
+        {advice && riskScore && (
+          <section className="flow-panel risk-results">
+            <span className="flow-eyebrow">YOUR SAFETY RESULTS</span>
+
+            <h2>Here's what we found</h2>
+
+            <div className="risk-results__score">
+              <div
+                className="risk-results__circle"
+                style={{
+                  "--risk-percent": `${riskScore.percentage}%`,
+                  "--risk-color":
+                    riskScore.level === "High"
+                      ? "#c21f2b"
+                      : riskScore.level === "Moderate"
+                        ? "#e59a23"
+                        : "#16834a",
+                }}
+              >
+                <div className="risk-results__circle-inner">
+                  <strong>{riskScore.percentage}%</strong>
+                  <span>Risk indicator</span>
+                </div>
+              </div>
+
+              <h3>{riskScore.level} Risk</h3>
+
+              <p>Based on your answers and REVENT's transaction checks.</p>
+            </div>
+
+            <div className="risk-results__factors">
+              <h3>Why this score?</h3>
+
+              {riskScore.factors.length > 0 ? (
+                riskScore.factors.map((factor, index) => (
+                  <div
+                    key={`${factor.message}-${index}`}
+                    className="risk-results__factor"
+                  >
+                    <CircleAlert size={21} />
+
+                    <span>{factor.message}</span>
+                  </div>
+                ))
+              ) : (
+                <p>No specific warning signs were identified.</p>
+              )}
+            </div>
+
+            <div className="risk-results__recommendation">
+              <ShieldCheck size={24} />
+
+              <div>
+                <h3>What should you do?</h3>
+                <p>{riskScore.recommendation}</p>
+              </div>
+            </div>
+
+            <p className="risk-results__disclaimer">
+              This score is a demo risk indicator, not the probability of fraud
+              or a guarantee of safety.
+            </p>
+
+            <button
+              type="button"
+              className="flow-button flow-button-primary risk-results__continue"
+              disabled={
+                Boolean(restriction) ||
+                assessment?.canProceedToConfirmation !== true
+              }
+              onClick={finishReview}
+            >
+              Proceed Payment
+              <ArrowRight size={20} />
+            </button>
           </section>
         )}
 
-        {(restriction ||
-          assessment?.canProceedToConfirmation !== true) && (
+        {(restriction || assessment?.canProceedToConfirmation !== true) && (
           <p className="flow-panel" role="status">
             {restriction ||
               assessment?.restrictionReason ||
@@ -598,10 +670,7 @@ export default function PaymentReview({ assessment }) {
           )}
 
           {saveMessage && (
-            <div
-              className={`flow-feedback ${saveMessage.type}`}
-              role="status"
-            >
+            <div className={`flow-feedback ${saveMessage.type}`} role="status">
               {saveMessage.type === "success" ? (
                 <CheckCircle2 size={20} />
               ) : (

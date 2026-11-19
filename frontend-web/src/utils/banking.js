@@ -143,3 +143,102 @@ export function generatePaymentAdvice(answers) {
     needsExtraCare: concerns.length > 0,
   };
 }
+
+export function calculatePaymentRisk(answers, assessment) {
+  let score = 0;
+  const factors = [];
+
+  function addRisk(points, message) {
+    score += points;
+    factors.push({
+      points,
+      message,
+    });
+  }
+
+  // Existing transaction risk assessment
+  const riskLevel = String(
+    assessment?.level || "low"
+  ).toLowerCase();
+
+  if (riskLevel === "high") {
+    addRisk(30, "Transaction flagged as high risk");
+  } else if (riskLevel === "medium" || riskLevel === "moderate") {
+    addRisk(15, "Unusual transaction activity detected");
+  }
+
+  // Recipient identity
+  if (answers.identity === "no") {
+    addRisk(25, "Recipient identity not verified");
+  } else if (answers.identity === "unsure") {
+    addRisk(15, "Recipient identity is uncertain");
+  }
+
+  // Payment pressure
+  if (answers.urgency === "yes") {
+    addRisk(20, "You're being pressured to pay quickly");
+  } else if (answers.urgency === "unsure") {
+    addRisk(10, "Possible payment pressure");
+  }
+
+  // Secrecy
+  if (answers.secrecy === "yes") {
+    addRisk(25, "You were asked to keep the payment secret");
+  }
+
+  // Unexpected additional fees
+  if (
+    answers.extraFee === "yes" &&
+    answers.disclosed === "no"
+  ) {
+    addRisk(20, "An unexpected additional fee was requested");
+  } else if (
+    answers.extraFee === "unsure" ||
+    (
+      answers.extraFee === "yes" &&
+      answers.disclosed === "unsure"
+    )
+  ) {
+    addRisk(10, "Additional fee details are unclear");
+  }
+
+  // Seller source
+  if (answers.source === "social") {
+    addRisk(10, "Seller found through social media or messaging");
+  } else if (answers.source === "unknown") {
+    addRisk(10, "Seller source is unknown");
+  }
+
+  // Independent reviews
+  if (answers.reviews === "no") {
+    addRisk(10, "Seller reviews have not been checked");
+  } else if (answers.reviews === "unsure") {
+    addRisk(5, "Seller reputation is uncertain");
+  }
+
+  const percentage = Math.min(100, score);
+
+  let level = "Low";
+  let recommendation =
+    "Check the recipient and payment details before proceeding.";
+
+  if (percentage >= 70) {
+    level = "High";
+    recommendation =
+      "Pause this payment. Verify the recipient through an independent, trusted channel.";
+  } else if (percentage >= 35) {
+    level = "Moderate";
+    recommendation =
+      "Verify the recipient and payment request before continuing.";
+  }
+
+  // Highest-scoring concerns first
+  factors.sort((a, b) => b.points - a.points);
+
+  return {
+    percentage,
+    level,
+    factors: factors.slice(0, 3),
+    recommendation,
+  };
+}

@@ -44,7 +44,7 @@ import ScheduledTransfer from "./pages/ScheduledTransfer";
 import TransactionHistory from "./pages/TransactionHistory";
 import AuthTest from "./pages/authTest";
 
-import ProtectedRoute from './components/protectedRoute';
+import ProtectedRoute from "./components/protectedRoute";
 import CallProtectionOverlay from "./components/security/CallProtectionOverlay";
 import TrustedCallers from "./pages/TrustedCallers";
 
@@ -52,13 +52,21 @@ function BankingLayout() {
   const { recordPaymentClick } = usePaymentBehaviour();
 
   function handlePaymentInteraction(event) {
-    // Only monitor interactions within payment pages
     const isPaymentPage = window.location.pathname.startsWith("/transfer");
 
     if (!isPaymentPage) return;
 
-    // Ignore clicks on the simulator
+    // Ignore simulator interactions
     if (event.target.closest(".simulator-bubble")) return;
+
+    // Ignore safety acknowledgement interactions
+    if (
+      event.target.closest(
+        ".confirmation-acknowledgement, .confirmation-final-check",
+      )
+    ) {
+      return;
+    }
 
     recordPaymentClick();
   }
@@ -109,10 +117,10 @@ export default function App() {
               element={<TransactionReview />}
             /> */}
 
-              <Route
+            <Route
               path="/report-suspicious-recipient"
               element={<ReportSuspiciousRecipient />}
-            /> 
+            />
             <Route
               path="/transfer/confirmation"
               element={<PaymentConfirmation />}
