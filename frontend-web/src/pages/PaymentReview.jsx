@@ -269,7 +269,7 @@ export default function PaymentReview() {
             <button
               type="button"
               className="payment-review-popup__primary"
-              onClick={() => setNeedsHelp(true)}
+              onClick={openReview}
             >
               No, help me check
             </button>
