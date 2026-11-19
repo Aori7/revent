@@ -45,6 +45,7 @@ import TransactionHistory from "./pages/TransactionHistory";
 import AuthTest from "./pages/authTest";
 
 import ProtectedRoute from './components/protectedRoute';
+import CallProtectionOverlay from "./components/security/CallProtectionOverlay";
 
 function BankingLayout() {
   const { recordPaymentClick } = usePaymentBehaviour();
@@ -67,6 +68,7 @@ function BankingLayout() {
       <Outlet />
       <MobileNavbar />
       <SimulatorBubble />
+      <CallProtectionOverlay />
     </div>
   );
 }
