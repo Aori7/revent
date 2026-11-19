@@ -1,31 +1,44 @@
-import { Link } from 'react-router-dom';
-import {Wallet,CreditCard,Settings,ChevronRight,BookOpenCheck} from 'lucide-react';
+import { Link } from "react-router-dom";
+import {
+  Wallet,
+  CreditCard,
+  Settings,
+  ChevronRight,
+  BookOpenCheck,
+  ShieldCheck,
+} from "lucide-react";
 
 function More() {
   const services = [
     {
-      title: 'Accounts',
-      description: 'View your bank accounts',
+      title: "Accounts",
+      description: "View your bank accounts",
       icon: Wallet,
-      path: '/accounts'
+      path: "/accounts",
     },
     {
-      title: 'Cards',
-      description: 'Manage your debit cards',
+      title: "Cards",
+      description: "Manage your debit cards",
       icon: CreditCard,
-      path: '/cards'
+      path: "/cards",
     },
     {
-      title: 'Settings',
-      description: 'Manage your preferences',
+      title: "Settings",
+      description: "Manage your preferences",
       icon: Settings,
-      path: '/settings'
+      path: "/settings",
     },
     {
-      title: 'Scam Education',
-      description: 'Learn the warning signs and how to verify safely',
+      title: "Trusted Callers",
+      description: "Manage approved callers during banking",
+      icon: ShieldCheck,
+      path: "/trusted-callers",
+    },
+    {
+      title: "Scam Education",
+      description: "Learn the warning signs and how to verify safely",
       icon: BookOpenCheck,
-      path: '/Education'
+      path: "/Education",
     },
   ];
 

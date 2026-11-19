@@ -45,6 +45,8 @@ import TransactionHistory from "./pages/TransactionHistory";
 import AuthTest from "./pages/authTest";
 
 import ProtectedRoute from './components/protectedRoute';
+import CallProtectionOverlay from "./components/security/CallProtectionOverlay";
+import TrustedCallers from "./pages/TrustedCallers";
 
 function BankingLayout() {
   const { recordPaymentClick } = usePaymentBehaviour();
@@ -67,6 +69,7 @@ function BankingLayout() {
       <Outlet />
       <MobileNavbar />
       <SimulatorBubble />
+      <CallProtectionOverlay />
     </div>
   );
 }
@@ -98,6 +101,7 @@ export default function App() {
             <Route path="/transfer" element={<TransferHub />} />
             <Route path="/transfer/ecommerce" element={<Transfer />} />
             <Route path="/transfer/review" element={<PaymentReview />} />
+            <Route path="/trusted-callers" element={<TrustedCallers />} />
             <Route path="/auth-test" element={<AuthTest />} />
 
             {/* <Route

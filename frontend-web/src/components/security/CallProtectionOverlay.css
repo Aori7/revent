@@ -1,0 +1,165 @@
+.call-protection-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  overflow-y: auto;
+
+  /* Transparent dark overlay */
+  background: rgba(10, 20, 35, 0.308);
+
+  /* Blur the banking page behind */
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.call-protection-card {
+  width: 100%;
+  max-width: 470px;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 34px;
+  text-align: center;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.3);
+}
+
+.call-protection-icon {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff0ef;
+  color: #ee2722;
+}
+
+.call-protection-label {
+  color: #ee2722;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.call-protection-card h2 {
+  margin: 14px 0;
+  font-size: 26px;
+  line-height: 1.25;
+  color: #172238;
+}
+
+.call-protection-card > p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #586174;
+}
+
+.call-protection-actions {
+  margin: 24px 0;
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.call-protection-actions > div {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px;
+  border-radius: 12px;
+  background: #fff3f2;
+  color: #a91f1b;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.call-protection-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #172238;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.call-protection-card .call-protection-footer {
+  margin: 17px 0 0;
+  font-size: 15px;
+  color: #7b8493;
+}
+
+
+.call-protection-card {
+  max-width: 400px;
+  padding: 30px 24px;
+}
+
+.call-protection-card h2 {
+  font-size: 24px;
+  margin: 12px 0;
+}
+
+.call-protection-card > p {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.call-protection-status {
+  margin-top: 22px;
+}
+
+.call-protection-demo-reset {
+  width: 100%;
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.call-protection-demo-reset:hover {
+  background: #f5f5f5;
+}
+.call-protection-trusted-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px 16px;
+
+  border: 1.5px solid #ee2722;
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #ee2722;
+
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.call-protection-trusted-btn:hover {
+  background: #fff1f0;
+}
+@media (max-width: 480px) {
+  .call-protection-card {
+    padding: 25px 20px;
+  }
+
+  .call-protection-card h2 {
+    font-size: 22px;
+  }
+}
