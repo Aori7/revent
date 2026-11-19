@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { PhoneOff, MonitorOff, ShieldAlert, LockKeyhole } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -12,8 +12,39 @@ export default function CallProtectionOverlay() {
 
   const isOnCall = Boolean(triggers.isOnCall);
   const isScreenSharing = Boolean(triggers.isScreenSharing);
-  const isBlocked = isOnCall || isScreenSharing;
+  // const isBlocked = isScreenSharing || (isOnCall && !isTrustedCaller);
+  const [callerNumber, setCallerNumber] = useState(
+    () => sessionStorage.getItem("reventSimulatedCaller") || "",
+  );
 
+  useEffect(() => {
+    function syncCaller() {
+      setCallerNumber(sessionStorage.getItem("reventSimulatedCaller") || "");
+    }
+
+    window.addEventListener("revent-caller-change", syncCaller);
+
+    return () => {
+      window.removeEventListener("revent-caller-change", syncCaller);
+    };
+  }, []);
+
+  const trustedCallers = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("reventTrustedCallers")) || [];
+    } catch {
+      return [];
+    }
+  })();
+
+  const normalise = (value) => String(value || "").replace(/\D/g, "");
+
+  const isTrustedCaller =
+    callerNumber.trim() !== "" &&
+    trustedCallers.some(
+      (contact) => normalise(contact.number) === normalise(callerNumber),
+    );
+    const isBlocked = isScreenSharing || (isOnCall && !isTrustedCaller);
   useEffect(() => {
     if (!isBlocked) return;
 
@@ -79,7 +110,7 @@ export default function CallProtectionOverlay() {
           <button
             type="button"
             className="call-protection-trusted-btn"
-            onClick={() => navigate("/more")}
+            onClick={() => navigate("/trusted-callers")}
           >
             Manage Trusted Callers
           </button>
