@@ -1,3 +1,4 @@
+
 import {
   startingPayment,
   demoCustomer,
@@ -158,7 +159,8 @@ export function saveAnswers(draft, answers) {
 }
 
 export function saveReviewForLater(customerId, draft, answers) {
-  if (customerId !== currentUserId) {
+  // Compare with the current user's ID, not the function reference.
+  if (!signedIn() || customerId !== currentUserId()) {
     throw new Error("Access denied.");
   }
 
@@ -173,7 +175,7 @@ export function saveReviewForLater(customerId, draft, answers) {
   return record;
 }
 
-export function getSavedReview(customerId) {
+export function getSavedReview(customerId = currentUserId()) {
   const saved = readJson(SAVED);
 
   if (
@@ -223,11 +225,13 @@ export function canConfirm() {
   if (!draft || readRestriction()) {
     return false;
   }
+
   const completedReview = matches(readJson(COMPLETED), draft);
 
   if (completedReview) {
     return true;
   }
+
   const risk = getRiskAssessment();
   return risk?.level === "low";
 }

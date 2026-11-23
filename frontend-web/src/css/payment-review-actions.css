@@ -1,11 +1,16 @@
-/* Separate cancellation from the edit and save actions. */
+
+/* ==========================================
+   REVENT PAYMENT REVIEW ACTIONS
+   ========================================== */
+
+/* Existing styles for legacy payment actions */
+
 .flow-save-card > .flow-button-row {
   margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 1px solid #e2e6ec;
 }
 
-/* Cancel payment is the direct button below the edit/save row. */
 .flow-save-card > .flow-back-button {
   display: inline-flex;
   align-items: center;
@@ -40,7 +45,6 @@
   cursor: wait;
 }
 
-/* The confirmation panel occupies the same row after cancellation is selected. */
 .flow-save-card > [role="group"][aria-label="Confirm cancellation"] {
   margin: 0;
   padding: 16px 18px;
@@ -64,7 +68,284 @@
   gap: 10px;
 }
 
-/* Bring the browser-session note closer to the actions. */
 .flow-save-card > .flow-small:last-child {
   margin: 18px 0 0;
+}
+
+/* ==========================================
+   REFINED SECONDARY ACTIONS
+   ========================================== */
+
+.flow-review-actions {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #e8dce0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(20, 24, 35, 0.04);
+}
+
+/* Collapsible heading */
+
+.flow-review-actions__summary {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 19px 21px;
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.flow-review-actions__summary::-webkit-details-marker {
+  display: none;
+}
+
+.flow-review-actions__summary::marker {
+  content: "";
+}
+
+.flow-review-actions__summary:hover {
+  background: #fffafb;
+}
+
+.flow-review-actions__summary:focus-visible {
+  outline: 3px solid #b42130;
+  outline-offset: -4px;
+  border-radius: 16px;
+}
+
+.flow-review-actions__badge {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: #b42130;
+  background: #fff0f2;
+}
+
+.flow-review-actions__summary-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.flow-review-actions__summary-copy strong {
+  font-size: 16px;
+  font-weight: 750;
+  color: #1f2937;
+}
+
+.flow-review-actions__summary-copy small {
+  font-size: 13px;
+  color: #667085;
+  line-height: 1.4;
+}
+
+.flow-review-actions__chevron {
+  color: #7a838f;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.flow-review-actions[open] .flow-review-actions__chevron {
+  transform: rotate(180deg);
+}
+
+/* Expanded content */
+
+.flow-review-actions__body {
+  padding: 0 21px 20px;
+  border-top: 1px solid #f1edf0;
+}
+
+.flow-review-actions__buttons {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 11px;
+  margin-top: 18px;
+}
+
+/* Shared button styles */
+
+.flow-review-actions__save,
+.flow-review-actions__edit,
+.flow-review-actions__keep,
+.flow-review-actions__confirm-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 49px;
+  padding: 11px 15px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Primary Save button */
+
+.flow-review-actions__save {
+  background: #b42130;
+  border: 1px solid #b42130;
+  color: #ffffff;
+}
+
+.flow-review-actions__save:hover:not(:disabled) {
+  background: #901b27;
+  border-color: #901b27;
+  box-shadow: 0 3px 12px rgba(180, 33, 48, 0.15);
+}
+
+/* Secondary Edit button */
+
+.flow-review-actions__edit,
+.flow-review-actions__keep {
+  background: #ffffff;
+  border: 1px solid #d0d5dd;
+  color: #344054;
+}
+
+.flow-review-actions__edit:hover:not(:disabled),
+.flow-review-actions__keep:hover:not(:disabled) {
+  background: #f8f9fb;
+  border-color: #98a2b3;
+}
+
+/* Cancel action */
+
+.flow-review-actions__footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 14px;
+  margin-top: 15px;
+  border-top: 1px solid #eef0f2;
+}
+
+.flow-review-actions__cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #b42130;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.flow-review-actions__cancel:hover:not(:disabled) {
+  background: #fff1f2;
+}
+
+/* Cancellation confirmation */
+
+.flow-review-actions__confirm {
+  width: 100%;
+  background: #fff8f8;
+  border: 1px solid #f2d5d9;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.flow-review-actions__confirm p {
+  font-size: 14px;
+  color: #7c2630;
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+
+.flow-review-actions__confirm-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.flow-review-actions__confirm-cancel {
+  border: 1px solid #b42130;
+  color: #b42130;
+  background: #ffffff;
+}
+
+.flow-review-actions__confirm-cancel:hover:not(:disabled) {
+  background: #fff0f2;
+}
+
+/* Link after saving */
+
+.flow-review-actions__resume-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: #b42130;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.flow-review-actions__resume-link:hover {
+  text-decoration: underline;
+}
+
+/* Accessibility */
+
+.flow-review-actions button:focus-visible {
+  outline: 3px solid #c67d87;
+  outline-offset: 3px;
+}
+
+.flow-review-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ==========================================
+   RESPONSIVE MOBILE LAYOUT
+   ========================================== */
+
+@media (max-width: 520px) {
+  .flow-review-actions__summary {
+    padding: 16px;
+    gap: 11px;
+  }
+
+  .flow-review-actions__body {
+    padding: 0 16px 16px;
+  }
+
+  .flow-review-actions__buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-review-actions__save,
+  .flow-review-actions__edit {
+    width: 100%;
+  }
+
+  .flow-review-actions__confirm-buttons {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-review-actions__chevron,
+  .flow-review-actions__save,
+  .flow-review-actions__edit {
+    transition: none;
+  }
 }

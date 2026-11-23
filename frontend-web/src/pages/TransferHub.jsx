@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -13,7 +14,6 @@ import {
 } from "lucide-react";
 
 import PageBanner from "../components/PageBanner";
-import { demoCustomer } from "../data/demoBanking";
 import {
   getSavedReview,
   saveDraft,
@@ -72,9 +72,7 @@ const transferOptions = [
 export default function TransferHub() {
   const navigate = useNavigate();
 
-  const [saved] = useState(() =>
-    getSavedReview(demoCustomer.id)
-  );
+  const [saved] = useState(() => getSavedReview());
   const [resumeError, setResumeError] = useState("");
 
   function resumeReview() {
@@ -82,7 +80,7 @@ export default function TransferHub() {
 
     try {
       // Read again in case the saved review has changed.
-      const currentSaved = getSavedReview(demoCustomer.id);
+      const currentSaved = getSavedReview();
 
       if (!currentSaved) {
         setResumeError(
