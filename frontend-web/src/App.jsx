@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Routes,
@@ -52,18 +53,32 @@ function BankingLayout() {
   const { recordPaymentClick } = usePaymentBehaviour();
 
   function handlePaymentInteraction(event) {
-    const isPaymentPage = window.location.pathname.startsWith("/transfer");
+    const path = window.location.pathname;
 
-    if (!isPaymentPage) return;
+    // Only count attempts to submit a payment, not ordinary page clicks.
+    const paymentEntryPages = new Set([
+      "/transfer/ecommerce",
+      "/transfer/paynow/send",
+      "/transfer/bank",
+      "/transfer/scan",
+      "/transfer/scheduled",
+    ]);
 
-    // Ignore simulator interactions
-    if (event.target.closest(".simulator-bubble")) return;
+    if (!paymentEntryPages.has(path)) return;
 
-    // Ignore safety acknowledgement interactions
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    // Ignore simulator controls and unrelated navigation.
+    if (target.closest(".simulator-bubble")) return;
+
+    const submitButton = target.closest('form button[type="submit"]');
+    if (!submitButton || submitButton.disabled) return;
+
+    // Registering a new payee is not a payment attempt.
     if (
-      event.target.closest(
-        ".confirmation-acknowledgement, .confirmation-final-check",
-      )
+      path === "/transfer/bank" &&
+      submitButton.textContent.trim().toLowerCase().includes("add payee")
     ) {
       return;
     }

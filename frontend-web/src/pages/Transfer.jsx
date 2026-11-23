@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   Link,
@@ -11,7 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { demoAccount, demoCustomer } from "../data/demoBanking";
+import { demoAccount } from "../data/demoBanking";
 import {
   getSavedReview,
   invalidateReview,
@@ -51,7 +52,7 @@ export default function Transfer() {
   const [error, setError] = useState("");
   const [verifiedRecipient, setVerifiedRecipient] = useState(null);
 
-  const saved = getSavedReview(demoCustomer.id);
+  const saved = getSavedReview();
 
   function update(field, value) {
     if (field !== "reference" && value !== form[field]) {
