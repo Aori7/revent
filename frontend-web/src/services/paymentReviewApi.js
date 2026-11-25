@@ -1,6 +1,4 @@
-
-const BASE_URL = "http://localhost:3000/api/payment-review";
-
+const BASE_URL = "/api/payment-review";
 async function requestReview(path, payload) {
   const token = sessionStorage.getItem("reventAccessToken");
 

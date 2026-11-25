@@ -1,17 +1,16 @@
-
 import { useState } from "react";
 
 import ChatbotHome from "../components/scamChatbot/ChatbotHome";
 import AnalysisResults from "../components/scamChatbot/AnalysisResults";
 
 import FollowUpQuestions, {
-  getFollowUpQuestions
+  getFollowUpQuestions,
 } from "../components/scamChatbot/FollowUpQuestions";
 
 import "../css/scam-chatbot.css";
 
 // Express backend running on port 5000
-const API_URL = "http://localhost:3000";
+// const API_URL = "";
 
 // Real IBM analysis is enabled
 const PREVIEW_MODE = false;
@@ -27,26 +26,31 @@ export default function ScamChatbot() {
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
 
-  // Send requests to Express backend
-  async function requestAI(path, body) {
-    const response = await fetch(`${API_URL}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
+// Send authenticated requests to Express backend
+async function requestAI(path, body) {
+  const token = sessionStorage.getItem("reventAccessToken");
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error || "The AI request failed."
-      );
-    }
-
-    return data;
+  if (!token) {
+    throw new Error("Please log in to use the AI chatbot.");
   }
+
+  const response = await fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "The AI request failed.");
+  }
+
+  return data;
+}
 
   // SCREEN 1 & 2 -> SCREEN 3
   async function handleAnalyse() {
@@ -67,12 +71,12 @@ export default function ScamChatbot() {
         warningSigns: [
           "Urgency and pressure|Demands action within 30 minutes.",
           "Suspicious verification link|Directs you to an unverified website.",
-          "Bank impersonation|Claims to be OCBC without verification."
+          "Bank impersonation|Claims to be OCBC without verification.",
         ],
         recommendations: [
           "Do not click the link or share banking details.",
-          "Verify the alert through the official bank app or website."
-        ]
+          "Verify the alert through the official bank app or website.",
+        ],
       };
 
       setAnalysis(sampleAnalysis);
@@ -82,19 +86,14 @@ export default function ScamChatbot() {
 
     // REAL IBM WATSONX.AI ANALYSIS
     try {
-      const data = await requestAI(
-        "/api/scam/analyze",
-        {
-          message: message.trim()
-        }
-      );
+      const data = await requestAI("/api/scam/analyze", {
+        message: message.trim(),
+      });
 
       // Backend returns the analysis directly
       setAnalysis(data);
     } catch (err) {
-      setError(
-        err.message || "Unable to connect to IBM AI."
-      );
+      setError(err.message || "Unable to connect to IBM AI.");
     } finally {
       setLoading(false);
     }
@@ -121,7 +120,7 @@ export default function ScamChatbot() {
 
         "Avoid sharing sensitive information. Contact the organisation through its official website or app if you are unsure.",
 
-        "Open the organisation's official app or manually enter its website address. Do not rely on contact details supplied in suspicious messages."
+        "Open the organisation's official app or manually enter its website address. Do not rely on contact details supplied in suspicious messages.",
       ];
 
       setAnswer(sampleAnswers[index]);
@@ -131,21 +130,15 @@ export default function ScamChatbot() {
 
     // REAL IBM AI FOLLOW-UP
     try {
-      const data = await requestAI(
-        "/api/scam/follow-up",
-        {
-          message: message.trim(),
-          analysis,
-          question: selectedQuestion
-        }
-      );
+      const data = await requestAI("/api/scam/follow-up", {
+        message: message.trim(),
+        analysis,
+        question: selectedQuestion,
+      });
 
       setAnswer(data.answer);
     } catch (err) {
-      setFollowUpError(
-        err.message ||
-          "Unable to generate a follow-up answer."
-      );
+      setFollowUpError(err.message || "Unable to generate a follow-up answer.");
     } finally {
       setFollowUpLoading(false);
     }
@@ -176,10 +169,7 @@ export default function ScamChatbot() {
           />
         ) : (
           <>
-            <AnalysisResults
-              analysis={analysis}
-              message={message}
-            >
+            <AnalysisResults analysis={analysis} message={message}>
               <FollowUpQuestions
                 message={message}
                 selectedIndex={selectedIndex}
