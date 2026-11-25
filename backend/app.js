@@ -1,21 +1,20 @@
+
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
 const { rateLimit } = require("express-rate-limit");
 const { requireAuth } = require("./middlewares/authMiddleware");
+
 const authRoutes = require("./routes/authRoutes");
 const readinessRoutes = require("./routes/readinessRoutes");
 const learningRoutes = require("./routes/learningRoutes");
 const rewardsRoutes = require("./routes/rewardsRoutes");
 const bankingRoutes = require("./routes/bankingRoutes");
 const paymentReviewRoutes = require("./routes/paymentReviewRoutes");
+const scamRoutes = require("./routes/scamRoutes");
 
-const {
-  testIBMConnection,
-  analyseScamMessage,
-  answerScamFollowUp,
-} = require("./services/ibmService");
+const { testIBMConnection } = require("./services/ibmService");
 
 const app = express();
 
@@ -31,6 +30,7 @@ app.use(cors({
 
 // Allow backend to receive JSON data.
 app.use(express.json({ limit: "20kb" }));
+
 // Limit AI requests per authenticated user.
 const chatbotLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -42,6 +42,7 @@ const chatbotLimiter = rateLimit({
     error: "Too many AI requests. Please try again in a minute."
   }
 });
+
 // Authentication routes.
 app.use("/api/auth", authRoutes);
 
@@ -58,6 +59,7 @@ app.get("/", (req, res) => {
 
 // IBM diagnostic endpoints (development only).
 if (process.env.NODE_ENV !== "production") {
+
   // Check IBM configuration.
   app.get("/api/ibm/status", (req, res) => {
     res.json({
@@ -67,6 +69,7 @@ if (process.env.NODE_ENV !== "production") {
       modelIdConfigured: Boolean(process.env.IBM_MODEL_ID)
     });
   });
+
   // Test IBM connection.
   app.get("/api/ibm/test", async (req, res) => {
     try {
@@ -77,6 +80,7 @@ if (process.env.NODE_ENV !== "production") {
         message: "IBM watsonx.ai connection successful!",
         response: result
       });
+
     } catch (error) {
       console.error("IBM test failed:", error.message);
 
@@ -87,63 +91,9 @@ if (process.env.NODE_ENV !== "production") {
     }
   });
 }
-// Analyse a suspicious message.
-app.post("/api/scam/analyze", requireAuth, chatbotLimiter, async (req, res) => {  try {
-    const { message } = req.body || {};
 
-    if (
-      typeof message !== "string" ||
-      !message.trim() ||
-      message.length > 5000
-    ) {
-      return res.status(400).json({
-        error: "Please enter a message of 1 to 5000 characters.",
-      });
-    }
-
-    const analysis = await analyseScamMessage(message);
-
-    res.json(analysis);
-  } catch (error) {
-    console.error("Scam analysis failed:", error.message);
-
-    res.status(500).json({
-      error: "Unable to analyse the message. Please try again.",
-    });
-  }
-});
-
-// Answer follow-up questions using IBM watsonx.ai.
-app.post("/api/scam/follow-up", requireAuth, chatbotLimiter, async (req, res) => {  try {
-    const { message, analysis, question } = req.body || {};
-
-    if (
-      typeof message !== "string" ||
-      !message.trim() ||
-      message.length > 5000 ||
-      typeof question !== "string" ||
-      !question.trim() ||
-      question.length > 500 ||
-      !analysis ||
-      typeof analysis !== "object" ||
-      Array.isArray(analysis)
-    ) {
-      return res.status(400).json({
-        error: "Invalid follow-up request.",
-      });
-    }
-
-    const answer = await answerScamFollowUp(message, analysis, question);
-
-    res.json({ answer });
-  } catch (error) {
-    console.error("Follow-up failed:", error.message);
-
-    res.status(500).json({
-      error: "Unable to generate an answer. Please try again.",
-    });
-  }
-});
+// Protected scam chatbot routes.
+app.use("/api/scam", requireAuth, chatbotLimiter, scamRoutes);
 
 // Existing learning, readiness and rewards routes.
 app.use("/api/readiness", readinessRoutes);
@@ -153,7 +103,7 @@ app.use("/api/rewards", rewardsRoutes);
 // Return JSON for unknown API routes.
 app.use("/api", (req, res) => {
   res.status(404).json({
-    error: "API endpoint not found.",
+    error: "API endpoint not found."
   });
 });
 
