@@ -1,9 +1,9 @@
-
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-
+const { rateLimit } = require("express-rate-limit");
+const { requireAuth } = require("./middlewares/authMiddleware");
 const authRoutes = require("./routes/authRoutes");
 const readinessRoutes = require("./routes/readinessRoutes");
 const learningRoutes = require("./routes/learningRoutes");
@@ -14,19 +14,34 @@ const paymentReviewRoutes = require("./routes/paymentReviewRoutes");
 const {
   testIBMConnection,
   analyseScamMessage,
-  answerScamFollowUp
+  answerScamFollowUp,
 } = require("./services/ibmService");
 
 const app = express();
 
-// Allow React frontend to communicate with backend.
+// Allowed frontend origins.
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: "http://localhost:5173"
+  origin: allowedOrigins
 }));
 
 // Allow backend to receive JSON data.
 app.use(express.json({ limit: "20kb" }));
-
+// Limit AI requests per authenticated user.
+const chatbotLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  keyGenerator: (req) => req.user.id,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    error: "Too many AI requests. Please try again in a minute."
+  }
+});
 // Authentication routes.
 app.use("/api/auth", authRoutes);
 
@@ -41,39 +56,39 @@ app.get("/", (req, res) => {
   res.send("OCBC Backend is running!");
 });
 
-// Check IBM configuration.
-app.get("/api/ibm/status", (req, res) => {
-  res.json({
-    apiKeyConfigured: Boolean(process.env.IBM_API_KEY),
-    projectIdConfigured: Boolean(process.env.IBM_PROJECT_ID),
-    region: process.env.IBM_REGION || "Not configured",
-    modelIdConfigured: Boolean(process.env.IBM_MODEL_ID)
-  });
-});
-
-// Test IBM connection.
-app.get("/api/ibm/test", async (req, res) => {
-  try {
-    const result = await testIBMConnection();
-
+// IBM diagnostic endpoints (development only).
+if (process.env.NODE_ENV !== "production") {
+  // Check IBM configuration.
+  app.get("/api/ibm/status", (req, res) => {
     res.json({
-      success: true,
-      message: "IBM watsonx.ai connection successful!",
-      response: result
+      apiKeyConfigured: Boolean(process.env.IBM_API_KEY),
+      projectIdConfigured: Boolean(process.env.IBM_PROJECT_ID),
+      region: process.env.IBM_REGION || "Not configured",
+      modelIdConfigured: Boolean(process.env.IBM_MODEL_ID)
     });
-  } catch (error) {
-    console.error("IBM test failed:", error.message);
+  });
+  // Test IBM connection.
+  app.get("/api/ibm/test", async (req, res) => {
+    try {
+      const result = await testIBMConnection();
 
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+      res.json({
+        success: true,
+        message: "IBM watsonx.ai connection successful!",
+        response: result
+      });
+    } catch (error) {
+      console.error("IBM test failed:", error.message);
 
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+}
 // Analyse a suspicious message.
-app.post("/api/scam/analyze", async (req, res) => {
-  try {
+app.post("/api/scam/analyze", requireAuth, chatbotLimiter, async (req, res) => {  try {
     const { message } = req.body || {};
 
     if (
@@ -82,7 +97,7 @@ app.post("/api/scam/analyze", async (req, res) => {
       message.length > 5000
     ) {
       return res.status(400).json({
-        error: "Please enter a message of 1 to 5000 characters."
+        error: "Please enter a message of 1 to 5000 characters.",
       });
     }
 
@@ -93,14 +108,13 @@ app.post("/api/scam/analyze", async (req, res) => {
     console.error("Scam analysis failed:", error.message);
 
     res.status(500).json({
-      error: "Unable to analyse the message. Please try again."
+      error: "Unable to analyse the message. Please try again.",
     });
   }
 });
 
 // Answer follow-up questions using IBM watsonx.ai.
-app.post("/api/scam/follow-up", async (req, res) => {
-  try {
+app.post("/api/scam/follow-up", requireAuth, chatbotLimiter, async (req, res) => {  try {
     const { message, analysis, question } = req.body || {};
 
     if (
@@ -115,22 +129,18 @@ app.post("/api/scam/follow-up", async (req, res) => {
       Array.isArray(analysis)
     ) {
       return res.status(400).json({
-        error: "Invalid follow-up request."
+        error: "Invalid follow-up request.",
       });
     }
 
-    const answer = await answerScamFollowUp(
-      message,
-      analysis,
-      question
-    );
+    const answer = await answerScamFollowUp(message, analysis, question);
 
     res.json({ answer });
   } catch (error) {
     console.error("Follow-up failed:", error.message);
 
     res.status(500).json({
-      error: "Unable to generate an answer. Please try again."
+      error: "Unable to generate an answer. Please try again.",
     });
   }
 });
@@ -143,7 +153,7 @@ app.use("/api/rewards", rewardsRoutes);
 // Return JSON for unknown API routes.
 app.use("/api", (req, res) => {
   res.status(404).json({
-    error: "API endpoint not found."
+    error: "API endpoint not found.",
   });
 });
 
