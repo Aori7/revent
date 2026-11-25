@@ -826,3 +826,136 @@
   color: #6b7280;
   line-height: 1.5;
 }
+
+
+
+/* ===== IMAGE ATTACHMENT AND OCR ===== */
+
+.scam-attachment-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  margin-top: 14px;
+  border: 1px solid #dce1e7;
+  border-radius: 12px;
+  background: #f8f9fb;
+}
+
+.scam-image-preview {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.scam-attachment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.scam-attachment-details strong {
+  font-size: 13px;
+  color: #242b36;
+  overflow-wrap: anywhere;
+}
+
+.scam-attachment-details span {
+  font-size: 12px;
+  color: #687380;
+}
+
+.scam-remove-attachment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #687380;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.scam-remove-attachment:hover:not(:disabled) {
+  background: #fff0f1;
+  color: #c8102e;
+}
+
+.scam-scan-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  margin-top: 12px;
+  background: #f7f8fa;
+  border: 1px solid #dce1e7;
+  border-radius: 10px;
+  color: #4c5560;
+  font-size: 13px;
+}
+
+.scam-scan-status progress {
+  width: 100%;
+  height: 8px;
+  accent-color: #c8102e;
+}
+
+.scam-spinner,
+.follow-up-spinner {
+  animation: scam-spin 1s linear infinite;
+}
+
+@keyframes scam-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.scam-upload-success {
+  font-size: 13px;
+  color: #15803d;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+.scam-attachment-hint {
+  color: #687380;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+.image-upload-button:hover:not(:disabled) {
+  background: #fff0f1;
+}
+
+.image-upload-button:disabled,
+.scam-remove-attachment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.scam-input textarea:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+@media (max-width: 600px) {
+  .scam-image-preview {
+    width: 60px;
+    height: 60px;
+  }
+
+  .scam-attachment-card {
+    gap: 10px;
+    padding: 10px;
+  }
+}

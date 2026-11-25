@@ -1,4 +1,6 @@
 
+import { useState } from "react";
+
 import {
   ShieldCheck,
   ScanSearch,
@@ -18,6 +20,19 @@ export default function ChatbotHome({
   loading,
   error
 }) {
+  const [processing, setProcessing] = useState(false);
+
+  // Add extracted image text to message
+  function handleExtractedText(text) {
+    setMessage((previous) => {
+      const combined = previous.trim()
+        ? `${previous.trim()}\n\n${text}`
+        : text;
+
+      return combined.slice(0, 5000);
+    });
+  }
+
   return (
     <>
       <section className="scam-red-header">
@@ -33,34 +48,60 @@ export default function ChatbotHome({
       </section>
 
       <section className="scam-main-content">
-        <h2>Check a suspicious message</h2>
+        <h2>Check suspicious content</h2>
+
         <p className="scam-input-description">
-          Paste a message to check for potential scam warning signs.
+          Paste a suspicious message or upload a screenshot
+          to check for potential scam warning signs.
         </p>
 
         <MessageInput
           message={message}
           setMessage={setMessage}
+          disabled={loading || processing}
         />
 
         <div className="scam-security-note">
           <LockKeyhole size={13} />
-          <span>Never share OTPs, PINs or passwords.</span>
+
+          <span>
+            Never share OTPs, PINs or passwords.
+          </span>
         </div>
 
         <div className="scam-upload-row">
-          <ImageUploadNotice />
+          <ImageUploadNotice
+            onExtract={handleExtractedText}
+            onProcessingChange={setProcessing}
+            disabled={loading}
+          />
         </div>
+
+        <p className="scam-attachment-hint">
+          Supported images: JPG, PNG and WEBP.
+          Maximum size: 10 MB.
+          Review and remove sensitive information from
+          extracted text before submitting it for AI analysis.
+        </p>
 
         <div className="scam-analyse-row">
           <button
             type="button"
             className="scam-primary-button"
             onClick={onAnalyse}
-            disabled={loading || !message.trim()}
+            disabled={
+              loading ||
+              processing ||
+              !message.trim()
+            }
           >
             <ScanSearch size={19} />
-            {loading ? "Analysing..." : "Analyse Message"}
+
+            {loading
+              ? "Analysing..."
+              : processing
+              ? "Scanning image..."
+              : "Analyse Content"}
           </button>
         </div>
 
@@ -71,7 +112,8 @@ export default function ChatbotHome({
         )}
 
         <p className="scam-disclaimer scam-centered">
-          AI assessments are guidance, not proof that a message is safe.
+          AI assessments are guidance, not proof that
+          content is safe.
         </p>
 
         <div className="scam-checks-box">

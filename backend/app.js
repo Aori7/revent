@@ -11,10 +11,11 @@ const rewardsRoutes = require("./routes/rewardsRoutes");
 const bankingRoutes = require("./routes/bankingRoutes");
 const paymentReviewRoutes = require("./routes/paymentReviewRoutes");
 
+// Scam chatbot routes.
+const scamRoutes = require("./routes/scamRoutes");
+
 const {
-  testIBMConnection,
-  analyseScamMessage,
-  answerScamFollowUp
+  testIBMConnection
 } = require("./services/ibmService");
 
 const app = express();
@@ -71,69 +72,8 @@ app.get("/api/ibm/test", async (req, res) => {
   }
 });
 
-// Analyse a suspicious message.
-app.post("/api/scam/analyze", async (req, res) => {
-  try {
-    const { message } = req.body || {};
-
-    if (
-      typeof message !== "string" ||
-      !message.trim() ||
-      message.length > 5000
-    ) {
-      return res.status(400).json({
-        error: "Please enter a message of 1 to 5000 characters."
-      });
-    }
-
-    const analysis = await analyseScamMessage(message);
-
-    res.json(analysis);
-  } catch (error) {
-    console.error("Scam analysis failed:", error.message);
-
-    res.status(500).json({
-      error: "Unable to analyse the message. Please try again."
-    });
-  }
-});
-
-// Answer follow-up questions using IBM watsonx.ai.
-app.post("/api/scam/follow-up", async (req, res) => {
-  try {
-    const { message, analysis, question } = req.body || {};
-
-    if (
-      typeof message !== "string" ||
-      !message.trim() ||
-      message.length > 5000 ||
-      typeof question !== "string" ||
-      !question.trim() ||
-      question.length > 500 ||
-      !analysis ||
-      typeof analysis !== "object" ||
-      Array.isArray(analysis)
-    ) {
-      return res.status(400).json({
-        error: "Invalid follow-up request."
-      });
-    }
-
-    const answer = await answerScamFollowUp(
-      message,
-      analysis,
-      question
-    );
-
-    res.json({ answer });
-  } catch (error) {
-    console.error("Follow-up failed:", error.message);
-
-    res.status(500).json({
-      error: "Unable to generate an answer. Please try again."
-    });
-  }
-});
+// Scam chatbot routes.
+app.use("/api/scam", scamRoutes);
 
 // Existing learning, readiness and rewards routes.
 app.use("/api/readiness", readinessRoutes);
