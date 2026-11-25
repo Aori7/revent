@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import SimulatorBubble from "./components/simulator/SimulatorBubble";
+import RiriBubble from "./components/riri/RiriBubble";
 import Navbar from "./components/navbar";
 import Dashboard from "./components/dashboard";
 import MobileNavbar from "./components/MobileNavbar";
@@ -92,6 +93,7 @@ function BankingLayout() {
       <Outlet />
       <MobileNavbar />
       <SimulatorBubble />
+      <RiriBubble />
       <CallProtectionOverlay />
     </div>
   );

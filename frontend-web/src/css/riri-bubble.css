@@ -1,0 +1,93 @@
+.riri-bubble {
+    position: fixed;
+    right: 20px;
+    bottom: 120px;
+
+    width: 90px;
+    height: 90px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+
+    background: linear-gradient(
+        145deg,
+        #ffffff,
+        #fff0e5
+    );
+
+    border: 2px solid #f1d5cc;
+    border-radius: 50%;
+
+    box-shadow: 0 6px 20px rgba(132, 63, 67, 0.18);
+
+    z-index: 999;
+
+    user-select: none;
+
+    animation: ririFloat 3.5s ease-in-out infinite;
+    transition: scale 0.25s ease;
+}
+
+.riri-avatar {
+    width: 95%;
+    height: 95%;
+
+    object-fit: contain;
+
+    pointer-events: none;
+
+    transform-origin: center bottom;
+    animation: ririBreathe 3s ease-in-out infinite;
+}
+
+/* Hover reaction */
+.riri-bubble:hover {
+    scale: 1.08;
+}
+
+/* Idle floating animation */
+@keyframes ririFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+/* Gentle breathing animation */
+@keyframes ririBreathe {
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.025, 0.98);
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .riri-bubble {
+        width: 75px;
+        height: 75px;
+
+        right: 16px;
+        bottom: calc(
+            200px + env(safe-area-inset-bottom)
+        );
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .riri-bubble,
+    .riri-avatar {
+        animation: none;
+        transition: none;
+    }
+}
