@@ -1,8 +1,6 @@
-const API_URL = "http://localhost:3000";
-
 export async function loginCustomer(accessCode, pin) {
     const response = await fetch(
-        "http://localhost:3000/api/auth/login",
+        "/api/auth/login",
         {
             method: "POST",
             headers: {
@@ -26,7 +24,7 @@ export async function loginCustomer(accessCode, pin) {
 
 export async function registerCustomer(fullName, email, pin) {
     const response = await fetch(
-        "http://localhost:3000/api/auth/register",
+        "/api/auth/register",
         {
             method: "POST",
             headers: {
@@ -52,7 +50,7 @@ export async function registerCustomer(fullName, email, pin) {
 
 export async function getCurrentUser(token, signal) {
     const response = await fetch(
-        "http://localhost:3000/api/auth/me",
+        "/api/auth/me",
         {
             method: "GET",
             headers: {
@@ -74,7 +72,7 @@ export async function getCurrentUser(token, signal) {
 
 export async function logoutCustomer(token) {
     const response = await fetch(
-        "http://localhost:3000/api/auth/logout",
+        "/api/auth/logout",
         {
             method: "POST",
             headers: {

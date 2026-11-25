@@ -3,6 +3,8 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const { rateLimit } = require("express-rate-limit");
+const { requireAuth } = require("./middlewares/authMiddleware");
 
 const authRoutes = require("./routes/authRoutes");
 const readinessRoutes = require("./routes/readinessRoutes");
@@ -10,23 +12,36 @@ const learningRoutes = require("./routes/learningRoutes");
 const rewardsRoutes = require("./routes/rewardsRoutes");
 const bankingRoutes = require("./routes/bankingRoutes");
 const paymentReviewRoutes = require("./routes/paymentReviewRoutes");
-
-// Scam chatbot routes.
 const scamRoutes = require("./routes/scamRoutes");
 
-const {
-  testIBMConnection
-} = require("./services/ibmService");
+const { testIBMConnection } = require("./services/ibmService");
 
 const app = express();
 
-// Allow React frontend to communicate with backend.
+// Allowed frontend origins.
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: "http://localhost:5173"
+  origin: allowedOrigins
 }));
 
 // Allow backend to receive JSON data.
 app.use(express.json({ limit: "20kb" }));
+
+// Limit AI requests per authenticated user.
+const chatbotLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  keyGenerator: (req) => req.user.id,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    error: "Too many AI requests. Please try again in a minute."
+  }
+});
 
 // Authentication routes.
 app.use("/api/auth", authRoutes);
@@ -42,38 +57,43 @@ app.get("/", (req, res) => {
   res.send("OCBC Backend is running!");
 });
 
-// Check IBM configuration.
-app.get("/api/ibm/status", (req, res) => {
-  res.json({
-    apiKeyConfigured: Boolean(process.env.IBM_API_KEY),
-    projectIdConfigured: Boolean(process.env.IBM_PROJECT_ID),
-    region: process.env.IBM_REGION || "Not configured",
-    modelIdConfigured: Boolean(process.env.IBM_MODEL_ID)
-  });
-});
+// IBM diagnostic endpoints (development only).
+if (process.env.NODE_ENV !== "production") {
 
-// Test IBM connection.
-app.get("/api/ibm/test", async (req, res) => {
-  try {
-    const result = await testIBMConnection();
-
+  // Check IBM configuration.
+  app.get("/api/ibm/status", (req, res) => {
     res.json({
-      success: true,
-      message: "IBM watsonx.ai connection successful!",
-      response: result
+      apiKeyConfigured: Boolean(process.env.IBM_API_KEY),
+      projectIdConfigured: Boolean(process.env.IBM_PROJECT_ID),
+      region: process.env.IBM_REGION || "Not configured",
+      modelIdConfigured: Boolean(process.env.IBM_MODEL_ID)
     });
-  } catch (error) {
-    console.error("IBM test failed:", error.message);
+  });
 
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
+  // Test IBM connection.
+  app.get("/api/ibm/test", async (req, res) => {
+    try {
+      const result = await testIBMConnection();
 
-// Scam chatbot routes.
-app.use("/api/scam", scamRoutes);
+      res.json({
+        success: true,
+        message: "IBM watsonx.ai connection successful!",
+        response: result
+      });
+
+    } catch (error) {
+      console.error("IBM test failed:", error.message);
+
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+}
+
+// Protected scam chatbot routes.
+app.use("/api/scam", requireAuth, chatbotLimiter, scamRoutes);
 
 // Existing learning, readiness and rewards routes.
 app.use("/api/readiness", readinessRoutes);

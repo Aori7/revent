@@ -5,7 +5,7 @@ import ChatbotHome from "../components/scamChatbot/ChatbotHome";
 import AnalysisResults from "../components/scamChatbot/AnalysisResults";
 
 import FollowUpQuestions, {
-  getFollowUpQuestions
+  getFollowUpQuestions,
 } from "../components/scamChatbot/FollowUpQuestions";
 
 import "../css/scam-chatbot.css";
@@ -22,12 +22,19 @@ export default function ScamChatbot() {
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpError, setFollowUpError] = useState("");
 
-  // Send requests to Express backend
+  // Send authenticated requests to Express backend.
   async function requestAI(path, body) {
+    const token = sessionStorage.getItem("reventAccessToken");
+
+    if (!token) {
+      throw new Error("Please log in to use the AI chatbot.");
+    }
+
     const response = await fetch(path, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(body)
     });
@@ -41,7 +48,7 @@ export default function ScamChatbot() {
     return data;
   }
 
-  // Analyse suspicious content
+  // Analyse suspicious content.
   async function handleAnalyse() {
     const submittedMessage = message.trim();
 
@@ -55,27 +62,22 @@ export default function ScamChatbot() {
     setFollowUpError("");
 
     try {
-      const data = await requestAI(
-        "/api/scam/analyze",
-        {
-          message: submittedMessage
-        }
-      );
+      const data = await requestAI("/api/scam/analyze", {
+        message: submittedMessage
+      });
 
       setAnalysedMessage(submittedMessage);
       setAnalysis(data);
 
     } catch (err) {
-      setError(
-        err.message || "Unable to connect to IBM AI."
-      );
+      setError(err.message || "Unable to connect to IBM AI.");
 
     } finally {
       setLoading(false);
     }
   }
 
-  // Generate follow-up answers
+  // Generate follow-up answers.
   async function handleFollowUp(index) {
     if (!analysis || followUpLoading) return;
 
@@ -90,14 +92,11 @@ export default function ScamChatbot() {
     setFollowUpLoading(true);
 
     try {
-      const data = await requestAI(
-        "/api/scam/follow-up",
-        {
-          message: analysedMessage,
-          analysis,
-          question: selectedQuestion
-        }
-      );
+      const data = await requestAI("/api/scam/follow-up", {
+        message: analysedMessage,
+        analysis,
+        question: selectedQuestion
+      });
 
       setAnswer(data.answer);
 
@@ -111,7 +110,7 @@ export default function ScamChatbot() {
     }
   }
 
-  // Reset chatbot
+  // Reset chatbot.
   function handleReset() {
     setMessage("");
     setAnalysedMessage("");
