@@ -8,14 +8,13 @@ const STORAGE_KEY = "reventSimulatorPosition";
 const MARGIN = 12;
 
 function getDefaultPosition() {
-  const size = window.innerWidth <= 600 ? 60 : 68;
-  const bottomSpace =
-    window.innerWidth <= 768 ? 112 : 30;
-
-  return {
-    x: window.innerWidth - size - 20,
-    y: window.innerHeight - size - bottomSpace,
-  };
+    const size = window.innerWidth <= 400 ? 60 : 68;
+    const bottomSpace =
+        window.innerWidth <= 768 ? 112 : 30;
+    return {
+        x: 20,
+        y: window.innerHeight - size - bottomSpace,
+    };
 }
 
 function SimulatorBubble() {

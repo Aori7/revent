@@ -51,7 +51,7 @@
 .simulator-panel-wrapper {
     position: fixed;
 
-    right: 24px;
+    left: 24px;
     bottom: 115px;
 
     z-index: 1000;
@@ -355,7 +355,7 @@
 @media (max-width: 768px) {
 
     .simulator-panel-wrapper {
-        right: 12px;
+        left: 12px;
 
         bottom: calc(
             170px + env(safe-area-inset-bottom)
