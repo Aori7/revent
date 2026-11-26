@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Link,
@@ -13,12 +13,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { demoAccount } from "../data/demoBanking";
-
 import {
+  activeDraft,
   restoreSavedPaymentReview,
   invalidateReview,
-  readDraft,
   saveDraft,
   saveAnswers,
   validPayment,
@@ -32,13 +30,12 @@ import {
 import useTransactionRisk from "../hooks/useTransactionRisk";
 
 import {
+  clearRiskAssessment,
   getRiskAssessment,
   saveRiskAssessment,
 } from "../utils/riskSession";
 
 import { demoRecipients } from "../utils/payNowRecipients";
-
-import "../css/banking-flow.css";
 
 import useSavedPaymentReview from "../hooks/useSavedPaymentReview";
 
@@ -46,37 +43,124 @@ import {
   getSavedPaymentReview,
 } from "../services/paymentReviewApi";
 
+import "../css/banking-flow.css";
+
 export default function Transfer() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const { assess } = useTransactionRisk();
 
+  const isEditing =
+    location.state?.editPayment === true;
+
   const [form, setForm] = useState(() => {
-    const existing = readDraft();
+    const existing = activeDraft();
 
+    // Only retain details when deliberately editing.
+    if (
+      isEditing &&
+      existing?.id &&
+      existing.transferType === "ecommerce"
+    ) {
+      return {
+        ...existing,
+        recipientName: "",
+      };
+    }
+
+    // All new payments start with empty fields.
     return {
-      ...existing,
-
       recipientName: "",
-
-      recipientNumber: existing.id
-        ? existing.recipientNumber
-        : "",
+      recipientNumber: "",
+      amount: "",
+      reference: "",
+      transferType: "ecommerce",
     };
   });
 
   const [error, setError] = useState("");
 
-  const [
-    verifiedRecipient,
-    setVerifiedRecipient,
-  ] = useState(null);
+  const [verifiedRecipient, setVerifiedRecipient] =
+    useState(null);
 
-  const {
-    saved,
-    savedError,
-  } = useSavedPaymentReview();
+  const { saved, savedError } =
+    useSavedPaymentReview();
+
+  const [account, setAccount] = useState(null);
+
+  const [accountError, setAccountError] =
+    useState("");
+
+  const [accountRetry, setAccountRetry] =
+    useState(0);
+
+  // Retrieve actual account balance from Supabase.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadAccount() {
+      try {
+        setAccountError("");
+
+        const token = sessionStorage.getItem(
+          "reventAccessToken"
+        );
+
+        const response = await fetch(
+          "http://localhost:3000/api/banking/overview",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+            cache: "no-store",
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || "Unable to retrieve account."
+          );
+        }
+
+        const current = data.accounts?.[0];
+
+        if (!current) {
+          throw new Error("No bank account found.");
+        }
+
+        setAccount({
+          id: current.account_id,
+
+          type:
+            current.account_type === "SAVINGS"
+              ? "REVENT Savings Account"
+              : "REVENT Current Account",
+
+          accountNumber: current.account_number,
+
+          balance: Number(current.balance),
+
+          dailyTransferLimit: Number(
+            current.daily_transfer_limit
+          ),
+        });
+
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setAccountError(error.message);
+          setAccount(null);
+        }
+      }
+    }
+
+    loadAccount();
+
+    return () => controller.abort();
+  }, [accountRetry]);
 
   function update(field, value) {
     if (
@@ -111,8 +195,10 @@ export default function Transfer() {
     }
   }
 
+  // Preserve existing simulated recipient verification.
   function lookupRecipient() {
-    const cleaned = form.recipientNumber.replace(/\D/g, "");
+    const cleaned =
+      form.recipientNumber.replace(/\D/g, "");
 
     if (!/^[89]\d{7}$/.test(cleaned)) {
       setError(
@@ -155,6 +241,14 @@ export default function Transfer() {
   function submit(event) {
     event.preventDefault();
 
+    if (!account || accountError) {
+      setError(
+        "Unable to verify your available balance. Please try again."
+      );
+
+      return;
+    }
+
     const amount = Number(form.amount);
 
     if (
@@ -174,12 +268,20 @@ export default function Transfer() {
       !form.recipientNumber.trim() ||
       !Number.isFinite(amount) ||
       amount <= 0 ||
-      amount > demoAccount.balance
+      amount > account.balance
     ) {
       setError(
         `Enter a recipient and an amount between SGD 0.01 and ${formatSGD(
-          demoAccount.balance
+          account.balance
         )}.`
+      );
+
+      return;
+    }
+
+    if (amount > account.dailyTransferLimit) {
+      setError(
+        "The payment exceeds your transfer limit."
       );
 
       return;
@@ -202,28 +304,52 @@ export default function Transfer() {
     }
 
     try {
-      const previous = readDraft();
-      const previousRisk = getRiskAssessment();
+      const previous = activeDraft();
+
+      const editingExistingPayment =
+        isEditing &&
+        previous?.id &&
+        previous.transferType === "ecommerce";
+
+      const previousRisk = editingExistingPayment
+        ? getRiskAssessment()
+        : null;
 
       const sameRecipient =
+        editingExistingPayment &&
         String(previous.recipientNumber)
           .replace(/[\s-]/g, "") ===
         String(form.recipientNumber)
           .replace(/[\s-]/g, "");
+
+      // A new payment must receive a fresh draft ID.
+      // Do not reuse an abandoned payment's review or alert.
+      if (!editingExistingPayment) {
+        invalidateReview();
+        clearRiskAssessment();
+
+        sessionStorage.removeItem(
+          "revent.demo.paymentDraft"
+        );
+
+        sessionStorage.removeItem(
+          "revent.firstRecipientAcknowledgement"
+        );
+      }
 
       const draft = saveDraft({
         ...form,
         transferType: "ecommerce",
       });
 
+      // Preserve existing risk assessment behaviour.
       const riskResult = assess(draft, {
-        ...(
-          sameRecipient
-            ? previousRisk?.recipientContext || {}
-            : {}
-        ),
+        ...(sameRecipient
+          ? previousRisk?.recipientContext || {}
+          : {}),
 
-        isNewRecipient: verifiedRecipient.isNewRecipient,
+        isNewRecipient:
+          verifiedRecipient.isNewRecipient,
       });
 
       saveRiskAssessment(draft, riskResult);
@@ -238,26 +364,29 @@ export default function Transfer() {
       } else {
         navigate("/transfer/review");
       }
+
     } catch (err) {
       setError(err.message);
     }
   }
 
+  // Preserve Sprint 1 save-and-resume functionality.
   async function resume() {
     try {
-      if (saved?.draft.transferType === "ecommerce") {
-        // Retrieve the latest server-backed saved review.
+      if (
+        saved?.draft.transferType === "ecommerce"
+      ) {
         restoreSavedPaymentReview(
           await getSavedPaymentReview()
         );
       } else {
-        // Preserve the existing browser-session behaviour.
         const resumed = saveDraft(saved.draft);
 
         saveAnswers(resumed, saved.answers);
       }
 
       navigate("/transfer/review");
+
     } catch (err) {
       setError(err.message);
     }
@@ -266,6 +395,7 @@ export default function Transfer() {
   return (
     <main className="flow-page">
       <div className="flow-shell flow-narrow">
+
         <div className="flow-page-heading">
           <div>
             <span className="flow-eyebrow">
@@ -275,8 +405,8 @@ export default function Transfer() {
             <h1>Make a payment</h1>
 
             <p>
-              Review your payment information before proceeding
-              to the safety check.
+              Review your payment information before
+              proceeding to the safety check.
             </p>
           </div>
         </div>
@@ -288,10 +418,7 @@ export default function Transfer() {
         )}
 
         {savedError && (
-          <p
-            className="flow-inline-error"
-            role="alert"
-          >
+          <p className="flow-inline-error" role="alert">
             {savedError}
           </p>
         )}
@@ -301,9 +428,7 @@ export default function Transfer() {
             <BookmarkCheck size={24} />
 
             <div>
-              <strong>
-                You have a saved review
-              </strong>
+              <strong>You have a saved review</strong>
 
               <p>
                 Resume your earlier review for{" "}
@@ -332,12 +457,37 @@ export default function Transfer() {
             <label>From account</label>
 
             <div className="flow-readonly">
-              {demoAccount.type} ·{" "}
-              {maskIdentifier(demoAccount.accountNumber)}
+              {accountError ? (
+                <>
+                  <span role="alert">
+                    {accountError}
+                  </span>
 
-              <span>
-                {formatSGD(demoAccount.balance)} available
-              </span>
+                  <button
+                    type="button"
+                    className="flow-button flow-button-secondary"
+                    onClick={() =>
+                      setAccountRetry((value) => value + 1)
+                    }
+                  >
+                    Retry
+                  </button>
+                </>
+              ) : account ? (
+                <>
+                  {account.type} ·{" "}
+
+                  {maskIdentifier(account.accountNumber)}
+
+                  <span>
+                    {formatSGD(account.balance)} available
+                  </span>
+                </>
+              ) : (
+                <span role="status">
+                  Loading account balance...
+                </span>
+              )}
             </div>
           </div>
 
@@ -360,6 +510,7 @@ export default function Transfer() {
                 inputMode="numeric"
                 maxLength={8}
                 placeholder="e.g. 91234567"
+                autoComplete="off"
                 onChange={(event) =>
                   changeRecipientNumber(event.target.value)
                 }
@@ -398,15 +549,10 @@ export default function Transfer() {
                     }}
                   >
                     <ShieldCheck size={22} />
-
                     Recipient found
                   </div>
 
-                  <h3
-                    style={{
-                      margin: "12px 0 6px",
-                    }}
-                  >
+                  <h3 style={{ margin: "12px 0 6px" }}>
                     {verifiedRecipient.maskedName}
                   </h3>
 
@@ -415,9 +561,9 @@ export default function Transfer() {
                   </span>
 
                   <span>
-                    A masked name does not confirm someone's
-                    identity. Verify unexpected payment requests
-                    through a trusted channel.
+                    A masked name does not confirm
+                    someone's identity. Verify unexpected
+                    payment requests through a trusted channel.
                   </span>
                 </>
               ) : (
@@ -437,8 +583,10 @@ export default function Transfer() {
               id="payment-amount"
               type="number"
               min="0.01"
-              max={demoAccount.balance}
+              max={account?.balance}
               step="0.01"
+              placeholder="Enter amount"
+              autoComplete="off"
               value={form.amount}
               onChange={(event) =>
                 update("amount", event.target.value)
@@ -455,6 +603,8 @@ export default function Transfer() {
             <input
               id="payment-reference"
               value={form.reference}
+              placeholder="Enter payment reference"
+              autoComplete="off"
               maxLength={120}
               onChange={(event) =>
                 update("reference", event.target.value)
@@ -463,10 +613,7 @@ export default function Transfer() {
           </div>
 
           {error && (
-            <p
-              className="flow-inline-error"
-              role="alert"
-            >
+            <p className="flow-inline-error" role="alert">
               {error}
             </p>
           )}
@@ -474,16 +621,15 @@ export default function Transfer() {
           <div className="flow-form-footer">
             <p>
               <ShieldCheck size={18} />
-
               Guided safety review before payment.
             </p>
 
             <button
               type="submit"
               className="flow-button flow-button-primary"
+              disabled={!account || Boolean(accountError)}
             >
               Continue to safety review
-
               <ArrowRight size={18} />
             </button>
           </div>
@@ -491,14 +637,10 @@ export default function Transfer() {
 
         <div className="flow-trust-note">
           <LockKeyhole size={17} />
-
           No real money is sent.
         </div>
 
-        <Link
-          className="flow-back"
-          to="/"
-        >
+        <Link className="flow-back" to="/">
           Back to home
         </Link>
       </div>

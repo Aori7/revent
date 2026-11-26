@@ -1,7 +1,8 @@
-
 "use strict";
 
 const db = require("../config/supabaseAdmin");
+
+const FIRST_RECIPIENT_THRESHOLD = 500;
 
 function unavailable(stage, error) {
   console.error(
@@ -12,8 +13,15 @@ function unavailable(stage, error) {
   const failure = new Error(
     "Payment safety checks are temporarily unavailable."
   );
+
   failure.status = 503;
   throw failure;
+}
+
+function invalid(message) {
+  const error = new Error(message);
+  error.status = 400;
+  throw error;
 }
 
 async function assertQuery(query, stage) {
@@ -24,9 +32,86 @@ async function assertQuery(query, stage) {
   return data ?? [];
 }
 
+// PBI-34 and PBI-36:
+// Retrieve trusted recipient history from Supabase.
+async function getRecipientPaymentHistory(userId, payment) {
+  const recipientNumber = String(
+    payment?.recipientNumber ?? ""
+  ).replace(/[\s-]/g, "");
+
+  const amountText = String(payment?.amount ?? "");
+
+  const amount = Number(amountText);
+
+  if (
+    !userId ||
+    !/^\d{8,16}$/.test(recipientNumber) ||
+    !/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(amountText) ||
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    amount > 1000000
+  ) {
+    invalid("Enter valid recipient and payment details.");
+  }
+
+  const { data, error } = await db.rpc(
+    "revent_sprint2_recipient_history",
+    {
+      p_user: userId,
+      p_recipient: recipientNumber,
+      p_amount: amount.toFixed(2),
+    }
+  );
+
+  if (error) {
+    unavailable("recipient-history", error);
+  }
+
+  // Never treat a missing or invalid response as zero history.
+  if (
+    !data ||
+    typeof data.isNewRecipient !== "boolean" ||
+    !Array.isArray(data.payments) ||
+    !Number.isSafeInteger(data.alreadySentCents) ||
+    !Number.isSafeInteger(data.proposedCents) ||
+    !Number.isSafeInteger(data.totalCents) ||
+    !Number.isSafeInteger(data.start) ||
+    !Number.isSafeInteger(data.end) ||
+    data.alreadySentCents < 0 ||
+    data.proposedCents <= 0 ||
+    data.totalCents !==
+      data.alreadySentCents + data.proposedCents ||
+    data.currency !== "SGD"
+  ) {
+    unavailable(
+      "recipient-history",
+      new Error("Invalid recipient history response.")
+    );
+  }
+
+  return data;
+}
+
 async function assessServerPaymentRisk(userId, payment) {
   const amount = Number(payment.amount);
-  const recipientNumber = payment.recipientNumber;
+
+  const recipientNumber = String(
+    payment.recipientNumber
+  ).replace(/[\s-]/g, "");
+
+  // PBI-34: Use actual completed payment history.
+  const history = await getRecipientPaymentHistory(
+    userId,
+    payment
+  );
+
+  const isNewRecipient = history.isNewRecipient;
+
+  // Only trigger the first-time recipient alert
+  // when the proposed amount is at least SGD 500.
+  const firstTimeRecipient =
+    isNewRecipient &&
+    amount >= FIRST_RECIPIENT_THRESHOLD;
 
   // Always use the authenticated user ID.
   const accounts = await assertQuery(
@@ -41,13 +126,13 @@ async function assessServerPaymentRisk(userId, payment) {
       blocked: true,
       reason: "No eligible account was found for this customer.",
       requiresReview: true,
-      firstTimeRecipient: true,
+      isNewRecipient,
+      firstTimeRecipient,
       score: 0,
     };
   }
 
-  // For this simulated e-commerce flow, check whether at
-  // least one customer-owned account can support the payment.
+  // Preserve existing account balance and limit checks.
   const eligible = accounts.some((account) => {
     const balance = Number(account.balance);
     const limit = Number(account.daily_transfer_limit);
@@ -60,26 +145,7 @@ async function assessServerPaymentRisk(userId, payment) {
     );
   });
 
-  // Check completed transfers to this recipient.
-  const history = await assertQuery(
-    db.from("transactions")
-      .select(`
-        transaction_id,
-        account:bank_accounts!transactions_from_account_id_fkey!inner(
-          user_id
-        ),
-        payee:payees!transactions_payee_id_fkey!inner(
-          payment_identifier
-        )
-      `)
-      .eq("account.user_id", userId)
-      .eq("payee.payment_identifier", recipientNumber)
-      .eq("transaction_status", "COMPLETED")
-      .limit(1),
-    "recipient-history"
-  );
-
-  // Check verified scam concerns.
+  // Preserve existing verified scam concern checks.
   const reports = await assertQuery(
     db.from("recipient_reports")
       .select("reported_identifier")
@@ -89,7 +155,7 @@ async function assessServerPaymentRisk(userId, payment) {
     "verified-reports"
   );
 
-  // Check for unusually frequent completed transfers.
+  // Preserve existing rapid completed transfer checks.
   const tenMinutesAgo = new Date(
     Date.now() - 10 * 60 * 1000
   ).toISOString();
@@ -109,22 +175,20 @@ async function assessServerPaymentRisk(userId, payment) {
     "recent-transfers"
   );
 
-  const firstTimeRecipient = history.length === 0;
   const verifiedScamReport = reports.length > 0;
   const rapidTransfers = recent.length >= 3;
 
-  // Match the database-backed portions of Revent's
-  // existing frontend risk scoring.
+  // Preserve the existing risk scoring system.
   const score = Math.min(
     100,
-    (firstTimeRecipient ? 20 : 0) +
-    (firstTimeRecipient && amount >= 500 ? 10 : 0) +
+    (isNewRecipient ? 20 : 0) +
+    (firstTimeRecipient ? 10 : 0) +
     (amount > 1000 ? 20 : 0) +
     (verifiedScamReport ? 40 : 0) +
     (rapidTransfers ? 15 : 0)
   );
 
-  // Mandatory server-side restrictions.
+  // Preserve mandatory server-side restrictions.
   const blocked =
     !eligible ||
     verifiedScamReport ||
@@ -141,6 +205,7 @@ async function assessServerPaymentRisk(userId, payment) {
   return {
     blocked,
     reason,
+    isNewRecipient,
     firstTimeRecipient,
     verifiedScamReport,
     rapidTransfers,
@@ -151,4 +216,5 @@ async function assessServerPaymentRisk(userId, payment) {
 
 module.exports = {
   assessServerPaymentRisk,
+  getRecipientPaymentHistory,
 };

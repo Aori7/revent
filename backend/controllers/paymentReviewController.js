@@ -1,4 +1,3 @@
-
 "use strict";
 
 const supabase = require("../config/supabaseAdmin");
@@ -44,6 +43,7 @@ async function persistRiskBlock(userId, id, version) {
     const failure = new Error(
       "Unable to store payment restriction."
     );
+
     failure.status = 503;
     throw failure;
   }
@@ -149,7 +149,7 @@ async function changeReview(req, res) {
     let risk = null;
 
     // Always recalculate trusted risk before
-    // assessment, completion, and confirmation.
+    // assessment, completion and confirmation.
     if (
       ["assess", "complete", "confirm"].includes(action)
     ) {
@@ -169,6 +169,67 @@ async function changeReview(req, res) {
           error: risk.reason,
         });
       }
+    }
+
+    // Record successful simulated e-commerce payments.
+    if (action === "confirm") {
+      // Preserve mandatory guided-review authorisation.
+      if (risk?.requiresReview) {
+        const { error: reviewError } =
+          await supabase.rpc(
+            "revent_review_transition",
+            {
+              p_user: req.user.id,
+              p_client: id,
+              p_version: version,
+              p_payment: payment,
+              p_action: "confirm",
+              p_answers: {},
+            }
+          );
+
+        if (reviewError) {
+          if (reviewError.code === "P0001") {
+            return res.status(409).json({
+              error: reviewError.message,
+            });
+          }
+
+          return res.status(503).json({
+            error: "Unable to authorise payment.",
+          });
+        }
+      }
+
+      const { data, error } = await supabase.rpc(
+        "revent_confirm_ecommerce_payment",
+        {
+          p_user: req.user.id,
+          p_client: id,
+          p_version: version,
+          p_payment: payment,
+        }
+      );
+
+      if (error) {
+        console.error(
+          "[payment-confirmation]",
+          error.code || error.message
+        );
+
+        if (error.code === "P0001") {
+          return res.status(409).json({
+            error: error.message,
+          });
+        }
+
+        return res.status(503).json({
+          error:
+            "Unable to complete payment. Please try again.",
+        });
+      }
+
+      return res.json(data);
     }
 
     // Existing transaction-safe Supabase function.
