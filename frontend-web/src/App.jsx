@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   Outlet,
+  useLocation ,
 } from "react-router-dom";
 
 import SimulatorBubble from "./components/simulator/SimulatorBubble";
@@ -52,7 +53,10 @@ import TrustedCallers from "./pages/TrustedCallers";
 
 function BankingLayout() {
   const { recordPaymentClick } = usePaymentBehaviour();
+  const location = useLocation();
 
+  const hideRiri =
+      location.pathname === "/scam-chatbot";
   function handlePaymentInteraction(event) {
     const path = window.location.pathname;
 
@@ -93,7 +97,7 @@ function BankingLayout() {
       <Outlet />
       <MobileNavbar />
       <SimulatorBubble />
-      <RiriBubble />
+      {!hideRiri && <RiriBubble />}
       <CallProtectionOverlay />
     </div>
   );
