@@ -1,7 +1,7 @@
-
 const {
   analyseScamMessage,
-  answerScamFollowUp
+  answerScamFollowUp,
+  chatWithRiri
 } = require("../services/ibmService");
 
 // Analyse suspicious content
@@ -72,7 +72,65 @@ async function followUp(req, res) {
   }
 }
 
+// Conversational Riri AI
+async function chat(req, res) {
+  try {
+    const { messages } = req.body || {};
+
+    if (
+      !Array.isArray(messages) ||
+      messages.length === 0 ||
+      messages.length > 20
+    ) {
+      return res.status(400).json({
+        error: "Invalid conversation history."
+      });
+    }
+
+    const validMessages = messages.every(
+      (item) =>
+        item &&
+        ["user", "assistant"].includes(item.role) &&
+        typeof item.content === "string" &&
+        item.content.trim().length > 0 &&
+        item.content.length <= 5000
+    );
+
+    if (
+      !validMessages ||
+      messages[messages.length - 1].role !== "user"
+    ) {
+      return res.status(400).json({
+        error: "Invalid chat message."
+      });
+    }
+
+    const totalLength = messages.reduce(
+      (total, item) => total + item.content.length,
+      0
+    );
+
+    if (totalLength > 20000) {
+      return res.status(400).json({
+        error: "Conversation context is too long."
+      });
+    }
+
+    const answer = await chatWithRiri(messages);
+
+    return res.status(200).json({ answer });
+
+  } catch (error) {
+    console.error("Riri chat failed:", error.message);
+
+    return res.status(500).json({
+      error: "Riri is temporarily unavailable. Please try again."
+    });
+  }
+}
+
 module.exports = {
   analyseMessage,
-  followUp
+  followUp,
+  chat
 };

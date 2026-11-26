@@ -959,3 +959,929 @@
     padding: 10px;
   }
 }
+
+
+
+
+/* ===== RIRI AI PERSONALISATION ===== */
+
+.scam-chatbot-page {
+  background: #fff9f6;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.scam-red-header {
+  background: linear-gradient(
+    120deg,
+    #b01f2e,
+    #850f20
+  );
+  padding: 22px max(5%, calc((100% - 1100px) / 2));
+}
+
+.scam-red-header h1 {
+  font-size: 30px;
+}
+
+.scam-red-header h2 {
+  font-size: 17px;
+  margin: 0;
+}
+
+.riri-header-avatar {
+  width: 66px;
+  height: 66px;
+  background: #fff1e8;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.riri-header-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.scam-main-content {
+  max-width: 680px;
+  padding: 24px 20px 70px;
+}
+
+/* Welcome mascot */
+
+.riri-welcome {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.riri-welcome-stage {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 12px;
+  background: #f9e6dc;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  animation: riri-welcome-pop
+    0.8s ease-out both;
+}
+
+.riri-welcome-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center bottom;
+
+  animation: riri-welcome-breathe
+    3s ease-in-out 0.8s infinite;
+}
+
+.riri-welcome h2 {
+  font-size: 28px;
+  font-weight: 750;
+  color: #b01f2e;
+  margin: 8px 0 4px;
+}
+
+.riri-welcome p {
+  font-size: 16px;
+  color: #64534d;
+  margin: 0;
+}
+
+/* Riri speech bubble */
+
+.riri-speech-bubble {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #ead5cb;
+  border-radius: 18px;
+  padding: 18px;
+  margin: 20px 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #42352f;
+  box-shadow: 0 3px 12px rgba(90, 50, 30, 0.05);
+
+  animation: riri-message-appear
+    0.6s ease-out both;
+}
+
+.riri-speech-bubble::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: calc(50% - 8px);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-top: 1px solid #ead5cb;
+  border-left: 1px solid #ead5cb;
+  transform: rotate(45deg);
+}
+
+/* Chat input */
+
+.riri-chat-composer {
+  background: #ffffff;
+  border: 1px solid #e7d8d0;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 4px 18px rgba(90, 50, 30, 0.05);
+}
+
+.scam-main-content .scam-input textarea {
+  font-size: 16px;
+  min-height: 110px;
+  background: #fafafa;
+  border: 1px solid #ded8d4;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.scam-main-content .scam-input textarea:focus {
+  border-color: #b01f2e;
+  box-shadow: 0 0 0 2px rgba(176, 31, 46, 0.1);
+}
+
+.character-count {
+  font-size: 13px;
+}
+
+.scam-upload-row .image-upload-button {
+  font-size: 15px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  color: #b01f2e;
+  border-color: #b01f2e;
+}
+
+.scam-analyse-row .scam-primary-button {
+  background: #b01f2e;
+  font-size: 16px;
+  min-height: 48px;
+  width: 100%;
+  border-radius: 12px;
+}
+
+.scam-analyse-row .scam-primary-button:hover:not(:disabled) {
+  background: #8d1725;
+}
+
+.scam-security-note {
+  justify-content: center;
+  font-size: 14px;
+  margin-top: 18px;
+  line-height: 1.5;
+}
+
+.scam-attachment-hint,
+.scam-centered,
+.scam-results-disclaimer {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.scam-centered {
+  margin: 12px 0;
+}
+
+/* Improve existing results readability */
+
+.scam-risk-card p,
+.scam-warning-item p,
+.scam-warning-text p,
+.scam-recommendation p,
+.scam-guidance-panel .follow-up-option,
+.follow-up-answer,
+.analysed-message {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.scam-warning-text strong {
+  font-size: 17px;
+}
+
+.scam-risk-title,
+.scam-attachment-details span,
+.scam-scan-status,
+.scam-upload-success {
+  font-size: 14px;
+}
+
+.scam-attachment-details strong {
+  font-size: 15px;
+}
+
+.scam-remove-attachment {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Riri animations */
+
+@keyframes riri-welcome-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.65);
+  }
+
+  65% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes riri-welcome-breathe {
+  0%, 100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateY(-5px) rotate(2deg);
+  }
+}
+
+@keyframes riri-message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.riri-is-thinking {
+  animation: riri-thinking-motion
+    1.4s ease-in-out infinite;
+}
+
+@keyframes riri-thinking-motion {
+  0%, 100% {
+    transform: rotate(-5deg);
+  }
+
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Mobile responsiveness */
+
+@media (max-width: 768px) {
+  .scam-red-header {
+    padding: 18px 16px;
+  }
+
+  .scam-red-header h1 {
+    font-size: 26px;
+  }
+
+  .scam-red-header h2 {
+    font-size: 16px;
+  }
+
+  .scam-main-content {
+    padding: 20px 16px 110px;
+  }
+
+  .riri-welcome-stage {
+    width: 145px;
+    height: 145px;
+  }
+
+  .riri-welcome h2 {
+    font-size: 25px;
+  }
+
+  .riri-welcome p {
+    font-size: 16px;
+  }
+
+  .riri-speech-bubble {
+    font-size: 16px;
+    padding: 16px;
+  }
+
+  .riri-chat-composer {
+    padding: 14px;
+  }
+
+  .scam-main-content .scam-input textarea {
+    font-size: 16px;
+    min-height: 110px;
+  }
+
+  .scam-results-grid {
+    padding: 0 16px;
+  }
+
+  .scam-chatbot-page {
+    padding-bottom: 90px;
+  }
+}
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  .riri-welcome-stage,
+  .riri-welcome-image,
+  .riri-speech-bubble,
+  .riri-is-thinking {
+    animation: none;
+  }
+}
+
+
+
+/* ===== RIRI CONVERSATIONAL CHAT ===== */
+
+.riri-conversation {
+  max-width: 820px;
+}
+
+.riri-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.riri-new-chat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #ffffff80;
+  background: transparent;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-height: 44px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.riri-new-chat:hover {
+  background: #ffffff20;
+}
+
+.riri-suggestions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0 24px;
+}
+
+.riri-suggestions button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #ead5cb;
+  background: white;
+  color: #514039;
+  border-radius: 14px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  min-height: 60px;
+}
+
+.riri-suggestions button svg {
+  color: #b01f2e;
+  flex-shrink: 0;
+}
+
+.riri-suggestions button:hover {
+  background: #fff0eb;
+  border-color: #b01f2e;
+}
+
+.riri-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin: 24px 0;
+}
+
+.riri-message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.riri-message-row.user {
+  justify-content: flex-end;
+}
+
+.riri-chat-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f9e6dc;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.riri-message-bubble {
+  max-width: 85%;
+  min-width: 0;
+  background: white;
+  border: 1px solid #ead5cb;
+  border-radius: 4px 18px 18px 18px;
+  padding: 16px 20px;
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  box-shadow: 0 3px 12px #00000005;
+}
+
+.riri-message-bubble strong {
+  display: block;
+  color: #b01f2e;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.riri-message-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.riri-message-row.user .riri-message-bubble {
+  background: #b01f2e;
+  color: white;
+  border-color: #b01f2e;
+  border-radius: 18px 4px 18px 18px;
+}
+
+.riri-message-row.user strong {
+  color: #ffe5e5;
+}
+
+.riri-voice-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  color: #b01f2e;
+  border: none;
+  min-height: 44px;
+  padding: 6px 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.riri-speech-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.riri-composer-tools {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.riri-composer-tools .image-upload-button,
+.riri-mic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #b01f2e;
+  color: #b01f2e;
+  border-radius: 10px;
+  padding: 10px 16px;
+  min-height: 44px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.riri-mic-button.recording {
+  background: #b01f2e;
+  color: white;
+  animation: riri-recording 1.4s infinite;
+}
+
+.riri-listening {
+  color: #b01f2e;
+  font-weight: 600;
+}
+
+.riri-thinking-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.riri-thinking-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #b01f2e;
+  animation: riri-dot 1.2s infinite;
+}
+
+.riri-thinking-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.riri-thinking-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes riri-dot {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes riri-recording {
+  50% {
+    box-shadow: 0 0 0 5px #b01f2e20;
+  }
+}
+
+.riri-conversation button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .riri-suggestions {
+    grid-template-columns: 1fr;
+  }
+
+  .riri-message-bubble {
+    max-width: calc(100% - 55px);
+    padding: 14px;
+  }
+
+  .riri-chat-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .riri-header-avatar {
+    display: none;
+  }
+
+  .riri-new-chat {
+    font-size: 14px;
+  }
+
+  .riri-composer-tools .image-upload-wrapper {
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .riri-thinking-dots span,
+  .riri-mic-button.recording {
+    animation: none;
+  }
+}
+
+
+/* ===== RIRI INLINE SCAM ANALYSIS ===== */
+
+.riri-message-bubble:has(.riri-analysis-card) {
+  width: 100%;
+  max-width: calc(100% - 64px);
+  box-sizing: border-box;
+}
+
+.riri-analysis-card {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.riri-risk-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 12px;
+}
+
+.riri-risk-banner svg {
+  flex-shrink: 0;
+}
+
+.riri-risk-banner span {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.riri-risk-banner h3 {
+  font-size: 23px;
+  margin: 3px 0;
+  color: inherit;
+}
+
+.riri-risk-banner small {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.riri-risk-banner.risk-high {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.riri-risk-banner.risk-medium {
+  background: #fffbeb;
+  color: #a16207;
+  border: 1px solid #facc15;
+}
+
+.riri-risk-banner.risk-low {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.riri-analysis-section {
+  padding: 16px;
+  border: 1px solid #eaded7;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.riri-analysis-section h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #302722;
+}
+
+.riri-warning-item,
+.riri-recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.riri-warning-item svg {
+  color: #b01f2e;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.riri-recommendation-item svg {
+  color: #15803d;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.riri-warning-item strong {
+  color: #302722;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.riri-warning-item p,
+.riri-recommendation-item p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #534943;
+}
+
+.riri-analysis-card .scam-guidance-panel {
+  width: 100%;
+  background: #fff9f6;
+  border: 1px solid #ead5cb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.riri-analysis-card .scam-heading h2 {
+  font-size: 18px;
+  color: #b01f2e;
+}
+
+.riri-analysis-card .follow-up-option {
+  min-height: 48px;
+  font-size: 15px;
+  border-color: #ead5cb;
+}
+
+.riri-analysis-card .follow-up-option svg {
+  color: #b01f2e;
+  flex-shrink: 0;
+}
+
+.riri-analysis-card .follow-up-answer {
+  background: #ffffff;
+  border: 1px solid #ead5cb;
+  padding: 14px;
+}
+
+.riri-analysis-card .riri-analysis-disclaimer {
+  font-size: 12px;
+  color: #756b66;
+  text-align: center;
+}
+
+/* ===== CHAT READABILITY ===== */
+
+.riri-conversation {
+  max-width: 920px;
+}
+
+.riri-message-bubble {
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.riri-message-bubble > strong {
+  font-size: 15px;
+}
+
+/* ===== STICKY CHAT COMPOSER ===== */
+
+.riri-chat-composer {
+  position: sticky;
+  bottom: 12px;
+  z-index: 10;
+  background: #ffffff;
+  box-shadow: 0 5px 25px #58352218;
+}
+
+.riri-message-list {
+  padding-bottom: 10px;
+  scroll-margin-bottom: 320px;
+}
+
+.riri-message-list > div:last-child {
+  scroll-margin-bottom: 320px;
+}
+
+/* ===== TWO SEND BUTTONS ===== */
+
+.riri-send-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.riri-send-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.riri-check-button {
+  border: 1px solid #b01f2e;
+  background: white;
+  color: #b01f2e;
+  padding: 12px;
+}
+
+.riri-check-button:hover:not(:disabled) {
+  background: #fff0eb;
+}
+
+.riri-send-actions .scam-primary-button {
+  background: #b01f2e;
+  color: white;
+  width: 100%;
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 600px) {
+  .riri-message-bubble {
+    font-size: 16px;
+  }
+
+  .riri-message-bubble:has(.riri-analysis-card) {
+    max-width: calc(100% - 52px);
+  }
+
+  .riri-analysis-section {
+    padding: 12px;
+  }
+
+  .riri-analysis-card .scam-guidance-panel {
+    padding: 12px;
+  }
+
+  .riri-risk-banner h3 {
+    font-size: 20px;
+  }
+
+  .riri-send-actions button {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .riri-chat-composer {
+    bottom: 0;
+  }
+}
+
+
+/* Unified Ask Riri button */
+
+.riri-send-actions {
+  display: flex;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.riri-send-actions .scam-primary-button {
+  width: 100%;
+  max-width: none;
+  flex: 1;
+  min-height: 50px;
+}
+
+/* Personalised advice from Riri */
+
+.riri-personal-advice {
+  background: #fff5ed;
+  border: 1px solid #efd3c1;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 18px 0;
+}
+
+.riri-personal-advice strong {
+  display: block;
+  color: #ad1d30;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.riri-personal-advice p {
+  color: #55453e;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Assessment inside conversation */
+
+.riri-message-bubble > p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.riri-analysis-card {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 18px;
+}
+
+.riri-analysis-card .scam-guidance-panel {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 16px;
+}
+
+.riri-analysis-card .follow-up-option {
+  width: 100%;
+  text-align: left;
+}
+
+.riri-analysis-card .follow-up-answer {
+  overflow-wrap: anywhere;
+}

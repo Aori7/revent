@@ -29,7 +29,7 @@ app.use(cors({
 }));
 
 // Allow backend to receive JSON data.
-app.use(express.json({ limit: "20kb" }));
+app.use(express.json({ limit: "128kb" }));
 
 // Limit AI requests per authenticated user.
 const chatbotLimiter = rateLimit({
