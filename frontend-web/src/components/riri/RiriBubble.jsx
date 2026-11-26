@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
+import RiriQuickChat from "./RiriQuickChat";
 import RiriIdle from "../../assets/riri/riri-idle-v2.gif";
 import RiriWave from "../../assets/riri/riri-wave.webp";
-import "../../css/riri-bubble.css";
+import "../../css/riri/riri-bubble.css";
 
 const STORAGE_KEY = "reventRiriPosition";
 const MARGIN = 12;
@@ -41,6 +42,9 @@ export default function RiriBubble() {
 
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   const positionRef = useRef(position);
 
   function clampPosition(x, y) {
@@ -121,10 +125,12 @@ export default function RiriBubble() {
 
     if (movedRef.current) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(positionRef.current));
+    } else if (event.type === "pointerup") {
+      setIsChatOpen((previous) => !previous);
     }
   }
-  const showGreeting = isHovered && !isDragging;
-
+  const showGreeting = isHovered && !isDragging && !isChatOpen;
+  const shouldWave = isHovered && !isDragging && !isChatOpen;
   const speechSide = position.x > window.innerWidth / 2 ? "left" : "right";
 
   const hasSideSpace =
@@ -140,42 +146,58 @@ export default function RiriBubble() {
     : position.y > 120
       ? "top"
       : "bottom";
-  return (
-    <div
-      ref={bubbleRef}
-      className={`riri-bubble ${isDragging ? "riri-dragging" : ""}`}
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onLostPointerCapture={handlePointerUp}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div
-        className={`riri-speech riri-speech-${speechPosition} ${
-          showGreeting ? "riri-speech-visible" : ""
-        }`}
-        aria-hidden={!showGreeting}
-      >
-        <span className="riri-speech-title">Meep! 🐾</span>
 
-        <span>How can Riri help you today?</span>
-      </div>
-      <div className="riri-bubble-inner">
-        <img
-          src={isHovered && !isDragging ? RiriWave : RiriIdle}
-          alt="Riri, your banking buddy"
-          className={`riri-avatar ${
-            isHovered && !isDragging ? "riri-avatar-wave" : "riri-avatar-idle"
+  return (
+    <>
+      <div
+        ref={bubbleRef}
+        className={`riri-bubble ${isDragging ? "riri-dragging" : ""}`}
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onLostPointerCapture={handlePointerUp}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Greeting speech bubble */}
+        <div
+          className={`riri-speech riri-speech-${speechPosition} ${
+            showGreeting ? "riri-speech-visible" : ""
           }`}
-          draggable={false}
-        />
+          aria-hidden={!showGreeting}
+        >
+          <span className="riri-speech-title">Meep! 🐾</span>
+          <span>How can Riri help you today?</span>
+        </div>
+
+        {/* Animated Riri avatar */}
+        <div className="riri-bubble-inner">
+          <img
+            src={shouldWave ? RiriWave : RiriIdle}
+            alt="Riri, your banking buddy"
+            className={`riri-avatar ${
+              shouldWave ? "riri-avatar-wave" : "riri-avatar-idle"
+            }`}
+            draggable={false}
+          />
+        </div>
       </div>
-    </div>
+
+      {/* Quick chat popup */}
+      {isChatOpen && (
+        <RiriQuickChat
+          onClose={() => setIsChatOpen(false)}
+          onMaximize={() => {
+            setIsChatOpen(false);
+            navigate("/scam-chatbot");
+          }}
+        />
+      )}
+    </>
   );
 }

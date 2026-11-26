@@ -1,0 +1,86 @@
+.dashboard-welcome-banner {
+    position: relative;
+    overflow: visible;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    min-height: 240px;
+
+    padding: 30px 5%;
+    margin: 0;
+    box-sizing: border-box;
+
+    border-radius: 0;
+
+    background: linear-gradient(
+        120deg,
+        #35141b 0%,
+        #791e2c 50%,
+        #b01f2e 100%
+    );
+
+    color: white;
+}
+
+/* Welcome text */
+
+.dashboard-welcome-content {
+    position: relative;
+    z-index: 2;
+
+    flex: 1;
+    min-width: 0;
+    padding-right: 300px;
+}
+
+.dashboard-welcome-banner .dashboard-welcome-content h1 {
+    margin: 0 0 10px;
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.dashboard-welcome-banner .dashboard-welcome-content p {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Riri */
+.dashboard-welcome-mascot {
+    position: absolute;
+
+    right: 8%;
+    bottom: -27.5px;
+
+    width: 280px;
+    height: auto;
+
+    pointer-events: none;
+}
+
+.dashboard-welcome-mascot img {
+    display: block;
+    width: 100%;
+    height: auto;
+
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .dashboard-welcome-mascot {
+        width: 175px;
+        right: 8px;
+        bottom: -17px;
+    }
+
+    .dashboard-welcome-content {
+        padding-right: 155px;
+    }
+}

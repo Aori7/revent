@@ -1,18 +1,15 @@
 import { useEffect, useState } from "react";
 
+import WelcomeBanner from "../components/dashboard/WelcomeBanner";
+
 import "../css/dashboard.css";
 import "../css/everyday-banking.css";
 
 import EverydayBanking from "./dashboard/EverydayBanking";
-
 import AccountCard from "./dashboard/AccountCard";
-
 import YourCards from "./dashboard/YourCards";
-
 import RecentTransactions from "./dashboard/RecentTransactions";
-
 import SecurityCard from "./dashboard/SecurityCard";
-
 import RewardsCard from "./dashboard/RewardsCard";
 
 // Added by Tiara - Report Suspicious Recipient
@@ -21,10 +18,8 @@ import ReportRecipientCard from "./dashboard/ReportRecipientCard";
 function Dashboard() {
   const [account, setAccount] = useState(null);
 
-  const [
-    accountError,
-    setAccountError,
-  ] = useState("");
+  const [accountError, setAccountError] =
+    useState("");
 
   const [retry, setRetry] = useState(0);
 
@@ -46,9 +41,7 @@ function Dashboard() {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-
             signal: controller.signal,
-
             cache: "no-store",
           }
         );
@@ -102,18 +95,13 @@ function Dashboard() {
   return (
     <main className="dashboard">
 
-      {/* Welcome */}
-      <section className="dashboard-top">
+      {/* Full-width welcome banner */}
+      <WelcomeBanner name="Kiki" />
 
-        <div className="dashboard-greeting">
+      {/* Padded dashboard content */}
+      <div className="dashboard-content">
 
-          <div>
-            <h1>Welcome back, Kiki</h1>
-
-            <p>
-              Here's an overview of your banking activity.
-            </p>
-          </div>
+        <section className="dashboard-top">
 
           <div className="dashboard-update">
 
@@ -133,79 +121,81 @@ function Dashboard() {
 
           </div>
 
-        </div>
+          <div className="dashboard-quick-actions">
+            <EverydayBanking />
+          </div>
 
-        <div className="dashboard-quick-actions">
-          <EverydayBanking />
-        </div>
+        </section>
 
-      </section>
+        {/* Main components for dashboard */}
+        <div className="dashboard-grid">
 
-      {/* Main components for dashboard */}
-      <div className="dashboard-grid">
+          <div className="dashboard-cards">
+            <YourCards />
+          </div>
 
-        <div className="dashboard-cards">
-          <YourCards />
-        </div>
+          {/* Account balance retrieved from Supabase */}
+          <div className="dashboard-account">
 
-        <div className="dashboard-account">
-
-          {accountError ? (
-            <section
-              className="account-card"
-              role="alert"
-            >
-
-              <h2>Your Account</h2>
-
-              <p>{accountError}</p>
-
-              <button
-                type="button"
-                className="flow-button flow-button-secondary"
-                onClick={() =>
-                  setRetry((value) => value + 1)
-                }
+            {accountError ? (
+              <section
+                className="account-card"
+                role="alert"
               >
-                Retry
-              </button>
 
-            </section>
-          ) : account ? (
-            <AccountCard account={account} />
-          ) : (
-            <section
-              className="account-card"
-              role="status"
-            >
+                <h2>Your Account</h2>
 
-              <h2>Your Account</h2>
+                <p>{accountError}</p>
 
-              <p>
-                Loading account balance...
-              </p>
+                <button
+                  type="button"
+                  className="flow-button flow-button-secondary"
+                  onClick={() =>
+                    setRetry((value) => value + 1)
+                  }
+                >
+                  Retry
+                </button>
 
-            </section>
-          )}
+              </section>
+            ) : account ? (
+              <AccountCard account={account} />
+            ) : (
+              <section
+                className="account-card"
+                role="status"
+              >
+
+                <h2>Your Account</h2>
+
+                <p>
+                  Loading account balance...
+                </p>
+
+              </section>
+            )}
+
+          </div>
+
+          {/* Recent transaction history */}
+          <div className="dashboard-transactions">
+            <RecentTransactions />
+          </div>
+
+          <div className="dashboard-security">
+            <SecurityCard />
+          </div>
+
+          <div className="dashboard-rewards">
+            <RewardsCard />
+          </div>
 
         </div>
 
-        <div className="dashboard-transactions">
-          <RecentTransactions />
-        </div>
-
-        <div className="dashboard-security">
-          <SecurityCard />
-        </div>
-
-        <div className="dashboard-rewards">
-          <RewardsCard />
-        </div>
+        {/* Added by Tiara - Report Suspicious Recipient */}
+        <ReportRecipientCard />
 
       </div>
-
-      {/* Added by Tiara - Report Suspicious Recipient */}
-      <ReportRecipientCard />
 
     </main>
   );
