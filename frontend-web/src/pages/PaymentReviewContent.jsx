@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import RecipientPaymentHistory from "../components/RecipientPaymentHistory";
 
 import {
@@ -47,6 +48,7 @@ import {
 } from "../utils/riskSession";
 
 import usePaymentRestriction from "../utils/usePaymentRestriction";
+
 import { reviewAction } from "../services/paymentReviewApi";
 
 import "../css/banking-flow.css";
@@ -150,6 +152,13 @@ export default function PaymentReview({ assessment }) {
     };
   }, []);
 
+  // Preserve payment details when intentionally editing.
+  function editPaymentDetails() {
+    navigate("/transfer/ecommerce", {
+      state: { editPayment: true },
+    });
+  }
+
   function answerQuestion(id, value) {
     if (actionPending.current) return;
 
@@ -205,12 +214,14 @@ export default function PaymentReview({ assessment }) {
       saveAnswers(draft, answers);
 
       setShowSummary(true);
+
     } catch (err) {
       setShowSummary(false);
 
       setActionError(
         err.message || "Unable to generate the safety summary."
       );
+
     } finally {
       actionPending.current = false;
       setBusy(false);
@@ -256,6 +267,7 @@ export default function PaymentReview({ assessment }) {
               ? "Review saved. Resume it from Transfer & Pay."
               : "Review saved for this browser session. Resume it from Transfer & Pay.",
         });
+
       } catch (error) {
         setSaveMessage({
           type: "error",
@@ -263,6 +275,7 @@ export default function PaymentReview({ assessment }) {
         });
 
         setActionError(error.message || "");
+
       } finally {
         savingRef.current = false;
         actionPending.current = false;
@@ -277,6 +290,7 @@ export default function PaymentReview({ assessment }) {
     if (actionPending.current) return;
 
     actionPending.current = true;
+
     setBusy(true);
     setActionError("");
 
@@ -320,10 +334,12 @@ export default function PaymentReview({ assessment }) {
       completeReview(draft, answers);
 
       navigate("/transfer/confirmation");
+
     } catch (err) {
       setActionError(
         err.message || "Unable to complete the payment review."
       );
+
     } finally {
       actionPending.current = false;
       setBusy(false);
@@ -355,11 +371,13 @@ export default function PaymentReview({ assessment }) {
         replace: true,
         state: { cancelled: true },
       });
+
     } catch (error) {
       setActionError(
         error.message ||
           "Cancellation failed. Please try again."
       );
+
     } finally {
       cancelPending.current = false;
       actionPending.current = false;
@@ -427,6 +445,7 @@ export default function PaymentReview({ assessment }) {
 
   return (
     <main className="flow-page">
+
       <div className="flow-shell flow-narrow">
 
         {/* Back navigation */}
@@ -434,9 +453,10 @@ export default function PaymentReview({ assessment }) {
           type="button"
           className="flow-back flow-back-button"
           disabled={busy}
-          onClick={() => navigate("/transfer/ecommerce")}
+          onClick={editPaymentDetails}
         >
           <ArrowLeft size={19} />
+
           Edit payment details
         </button>
 
@@ -445,12 +465,15 @@ export default function PaymentReview({ assessment }) {
           className="payment-review-notice"
           aria-labelledby="payment-review-notice-title"
         >
+
           <div className="payment-review-notice__top">
+
             <div className="payment-review-notice__icon">
               <ShieldAlert size={28} strokeWidth={2.5} />
             </div>
 
             <div className="payment-review-notice__content">
+
               <span className="payment-review-notice__label">
                 REVENT SECURITY ALERT
               </span>
@@ -465,10 +488,13 @@ export default function PaymentReview({ assessment }) {
                 You're about to send{" "}
                 <strong>{formatSGD(draft.amount)}</strong>.
               </p>
+
             </div>
+
           </div>
 
           <div className="payment-review-notice__tip">
+
             <ShieldCheck size={20} />
 
             <span>
@@ -476,12 +502,16 @@ export default function PaymentReview({ assessment }) {
                 ? "Know who you're paying? Verify their identity first."
                 : "Make sure you recognise this payment request."}
             </span>
+
           </div>
+
         </aside>
 
         {/* Page heading */}
         <div className="flow-page-heading">
+
           <div>
+
             <span className="flow-eyebrow">
               PAYMENT SAFETY
             </span>
@@ -491,17 +521,22 @@ export default function PaymentReview({ assessment }) {
             <p>
               A few quick checks before you decide whether to proceed.
             </p>
+
           </div>
+
         </div>
 
         {/* Payment information */}
         <section className="flow-panel flow-summary-card">
+
           <div className="flow-section-title">
+
             <h2>Payment Summary</h2>
 
             <span className="flow-tag">
               Read-only
             </span>
+
           </div>
 
           <p className="flow-payment-amount">
@@ -509,23 +544,29 @@ export default function PaymentReview({ assessment }) {
           </p>
 
           <dl className="flow-detail-list">
+
             <div className="flow-detail-row">
               <dt>Recipient</dt>
               <dd>{draft.recipientName}</dd>
             </div>
 
             <div className="flow-detail-row">
+
               <dt>Recipient identifier</dt>
+
               <dd>
                 {maskIdentifier(draft.recipientNumber)}
               </dd>
+
             </div>
 
             <div className="flow-detail-row">
               <dt>Reference</dt>
               <dd>{draft.reference || "—"}</dd>
             </div>
+
           </dl>
+
         </section>
 
         {/* Existing recipient payment history */}
@@ -536,8 +577,11 @@ export default function PaymentReview({ assessment }) {
           className="flow-panel flow-questions guided-check"
           aria-labelledby="guided-check-title"
         >
+
           <div className="flow-section-title">
+
             <div>
+
               <span className="flow-eyebrow">
                 GUIDED CHECK
               </span>
@@ -545,6 +589,7 @@ export default function PaymentReview({ assessment }) {
               <h2 id="guided-check-title">
                 Let's check this payment
               </h2>
+
             </div>
 
             <ShieldCheck
@@ -552,12 +597,15 @@ export default function PaymentReview({ assessment }) {
               className="flow-red"
               aria-hidden="true"
             />
+
           </div>
 
           {!showSummary && currentQuestion && (
             <>
+
               {/* Progress indicator */}
               <div className="guided-check__progress-heading">
+
                 <span>
                   Question {safeIndex + 1} of {visible.length}
                 </span>
@@ -565,6 +613,7 @@ export default function PaymentReview({ assessment }) {
                 <span>
                   {answeredCount} answered
                 </span>
+
               </div>
 
               <div
@@ -575,11 +624,13 @@ export default function PaymentReview({ assessment }) {
                 aria-valuemin={0}
                 aria-valuemax={visible.length}
               >
+
                 <div
                   style={{
                     width: `${progressPercent}%`,
                   }}
                 />
+
               </div>
 
               {/* Current question */}
@@ -588,6 +639,7 @@ export default function PaymentReview({ assessment }) {
                 id={`question-${currentQuestion.id}`}
                 className="guided-check__question"
               >
+
                 <legend>
                   {currentQuestion.label}
                 </legend>
@@ -599,7 +651,9 @@ export default function PaymentReview({ assessment }) {
                 )}
 
                 <div className="guided-check__options">
+
                   {currentQuestion.options.map(([value, label]) => (
+
                     <label
                       key={value}
                       className={`guided-check__option ${
@@ -608,6 +662,7 @@ export default function PaymentReview({ assessment }) {
                           : ""
                       }`}
                     >
+
                       <input
                         type="radio"
                         name={currentQuestion.id}
@@ -625,8 +680,11 @@ export default function PaymentReview({ assessment }) {
                       />
 
                       <span>{label}</span>
+
                     </label>
+
                   ))}
+
                 </div>
 
                 {missing.includes(currentQuestion.id) && (
@@ -637,10 +695,12 @@ export default function PaymentReview({ assessment }) {
                     Choose an answer to continue.
                   </p>
                 )}
+
               </fieldset>
 
               {/* Question navigation */}
               <div className="guided-check__navigation">
+
                 <button
                   type="button"
                   className="flow-button flow-button-secondary"
@@ -651,6 +711,7 @@ export default function PaymentReview({ assessment }) {
                   }}
                 >
                   <ArrowLeft size={18} />
+
                   Back
                 </button>
 
@@ -662,19 +723,25 @@ export default function PaymentReview({ assessment }) {
                   }
                   onClick={nextQuestion}
                 >
+
                   {safeIndex === visible.length - 1
                     ? "See my safety summary"
                     : "Next question"}
 
                   <ArrowRight size={18} />
+
                 </button>
+
               </div>
+
             </>
           )}
 
           {/* Completed questionnaire */}
           {showSummary && (
+
             <div className="guided-check__complete">
+
               <CheckCircle2
                 size={30}
                 className="flow-credit"
@@ -698,13 +765,18 @@ export default function PaymentReview({ assessment }) {
               >
                 Review my answers
               </button>
+
             </div>
+
           )}
+
         </section>
 
         {/* Existing percentage-based risk summary */}
         {advice && riskScore && (
+
           <section className="flow-panel risk-results">
+
             <span className="flow-eyebrow">
               YOUR SAFETY RESULTS
             </span>
@@ -712,6 +784,7 @@ export default function PaymentReview({ assessment }) {
             <h2>Here's what we found</h2>
 
             <div className="risk-results__score">
+
               <div
                 className="risk-results__circle"
                 style={{
@@ -724,13 +797,17 @@ export default function PaymentReview({ assessment }) {
                         : "#16834a",
                 }}
               >
+
                 <div className="risk-results__circle-inner">
+
                   <strong>
                     {riskScore.percentage}%
                   </strong>
 
                   <span>Risk indicator</span>
+
                 </div>
+
               </div>
 
               <h3>{riskScore.level} Risk</h3>
@@ -738,35 +815,51 @@ export default function PaymentReview({ assessment }) {
               <p>
                 Based on your answers and REVENT's transaction checks.
               </p>
+
             </div>
 
             <div className="risk-results__factors">
+
               <h3>Why this score?</h3>
 
               {riskScore.factors.length > 0 ? (
+
                 riskScore.factors.map((factor, index) => (
+
                   <div
                     key={`${factor.message}-${index}`}
                     className="risk-results__factor"
                   >
                     <CircleAlert size={21} />
+
                     <span>{factor.message}</span>
+
                   </div>
+
                 ))
+
               ) : (
+
                 <p>
                   No specific warning signs were identified.
                 </p>
+
               )}
+
             </div>
 
             <div className="risk-results__recommendation">
+
               <ShieldCheck size={24} />
 
               <div>
+
                 <h3>What should you do?</h3>
+
                 <p>{riskScore.recommendation}</p>
+
               </div>
+
             </div>
 
             <p className="risk-results__disclaimer">
@@ -788,9 +881,13 @@ export default function PaymentReview({ assessment }) {
               onClick={finishReview}
             >
               Proceed Payment
+
               <ArrowRight size={20} />
+
             </button>
+
           </section>
+
         )}
 
         {/* Existing payment restrictions */}
@@ -798,22 +895,29 @@ export default function PaymentReview({ assessment }) {
           restriction ||
           assessment?.canProceedToConfirmation !== true
         ) && (
+
           <p className="flow-panel" role="status">
+
             {restriction ||
               assessment?.restrictionReason ||
               "This payment cannot proceed yet"}
+
             . Confirmation is unavailable while this
             restriction is active.
+
           </p>
+
         )}
 
         {actionError && (
+
           <p
             className="flow-inline-error"
             role="alert"
           >
             {actionError}
           </p>
+
         )}
 
         {/* Redesigned secondary payment actions */}
@@ -823,7 +927,9 @@ export default function PaymentReview({ assessment }) {
             "flow-review-actions"
           }
         >
+
           <summary className="flow-review-actions__summary">
+
             <span
               className="flow-review-actions__badge"
               aria-hidden="true"
@@ -832,11 +938,13 @@ export default function PaymentReview({ assessment }) {
             </span>
 
             <span className="flow-review-actions__summary-copy">
+
               <strong>Need more time?</strong>
 
               <small>
                 Save this review or make changes to your payment.
               </small>
+
             </span>
 
             <ChevronDown
@@ -844,12 +952,14 @@ export default function PaymentReview({ assessment }) {
               size={20}
               aria-hidden="true"
             />
+
           </summary>
 
           <div className="flow-review-actions__body">
 
             {/* Save and Edit */}
             <div className="flow-review-actions__buttons">
+
               <button
                 type="button"
                 className="flow-review-actions__save"
@@ -858,6 +968,7 @@ export default function PaymentReview({ assessment }) {
                 }
                 onClick={saveForLater}
               >
+
                 <BookmarkCheck
                   size={19}
                   aria-hidden="true"
@@ -866,41 +977,48 @@ export default function PaymentReview({ assessment }) {
                 {saving
                   ? "Saving review..."
                   : "Save & verify later"}
+
               </button>
 
+              {/* Retain details when intentionally editing. */}
               <button
                 type="button"
                 className="flow-review-actions__edit"
                 disabled={
                   busy || saving || confirmCancel
                 }
-                onClick={() =>
-                  navigate("/transfer/ecommerce")
-                }
+                onClick={editPaymentDetails}
               >
+
                 <PencilLine
                   size={19}
                   aria-hidden="true"
                 />
 
                 Edit details
+
               </button>
+
             </div>
 
             {/* Cancellation */}
             <div className="flow-review-actions__footer">
+
               {confirmCancel ? (
+
                 <div
                   className="flow-review-actions__confirm"
                   role="group"
                   aria-label="Confirm cancellation"
                 >
+
                   <p>
                     Cancel this payment? Your unsent payment
                     and saved review will be discarded.
                   </p>
 
                   <div className="flow-review-actions__confirm-buttons">
+
                     <button
                       type="button"
                       className="flow-review-actions__keep"
@@ -921,54 +1039,78 @@ export default function PaymentReview({ assessment }) {
                     >
                       Yes, cancel payment
                     </button>
+
                   </div>
+
                 </div>
+
               ) : (
+
                 <button
                   type="button"
                   className="flow-review-actions__cancel"
                   disabled={busy || saving}
                   onClick={() => setConfirmCancel(true)}
                 >
+
                   <X size={17} aria-hidden="true" />
 
                   Cancel payment
+
                 </button>
+
               )}
+
             </div>
 
             {/* Save result */}
             {saveMessage && (
+
               <div
                 className={`flow-feedback ${saveMessage.type}`}
                 role="status"
               >
+
                 {saveMessage.type === "success" ? (
+
                   <CheckCircle2 size={20} />
+
                 ) : (
+
                   <CircleAlert size={20} />
+
                 )}
 
                 <span>{saveMessage.text}</span>
+
               </div>
+
             )}
 
             {saveMessage?.type === "success" && (
+
               <Link
                 className="flow-review-actions__resume-link"
                 to="/transfer"
               >
+
                 Return to Transfer & Pay
 
                 <ArrowRight
                   size={17}
                   aria-hidden="true"
                 />
+
               </Link>
+
             )}
+
           </div>
+
         </details>
+
       </div>
+
     </main>
   );
 }

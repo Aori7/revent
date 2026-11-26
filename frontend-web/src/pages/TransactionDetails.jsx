@@ -1,4 +1,4 @@
-
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
 import {
@@ -12,13 +12,21 @@ import {
 import {
   demoCustomer,
   demoAccount,
-  demoTransactions,
 } from "../data/demoBanking";
 
 import {
   formatSGD,
   maskIdentifier,
 } from "../utils/banking";
+
+import {
+  getTransactions,
+} from "../utils/transactionHistory";
+
+import {
+  bankingRequest,
+  mapBankingTransaction,
+} from "../hooks/useBankingTransactions";
 
 import "../css/banking-flow.css";
 
@@ -34,18 +42,86 @@ function DetailRow({ label, value }) {
 function TransactionDetails() {
   const { transactionId } = useParams();
 
-  // Demo-only ownership check against fictional sample data.
-  // Real applications must enforce access on the server.
-  const transaction = demoTransactions.find(
-    (item) =>
-      item.id === transactionId &&
-      item.customerId === demoCustomer.id &&
-      item.accountId === demoAccount.id
-  );
+  const isDatabaseTransaction =
+    /^[1-9]\d*$/.test(transactionId || "");
+
+  const [result, setResult] = useState(null);
+  const [retry, setRetry] = useState(0);
+
+  // Retrieve database transactions securely.
+  useEffect(() => {
+    if (!isDatabaseTransaction) return;
+
+    const controller = new AbortController();
+
+    async function loadTransaction() {
+      try {
+        const data = await bankingRequest(
+          `/transactions/${encodeURIComponent(
+            transactionId
+          )}`,
+          controller.signal
+        );
+
+        if (!data.transaction) {
+          throw new Error("Transaction not found.");
+        }
+
+        if (!controller.signal.aborted) {
+          setResult({
+            id: transactionId,
+            retry,
+            transaction: mapBankingTransaction(
+              data.transaction
+            ),
+          });
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setResult({
+            id: transactionId,
+            retry,
+            error: error.message,
+          });
+        }
+      }
+    }
+
+    loadTransaction();
+
+    return () => controller.abort();
+  }, [transactionId, isDatabaseTransaction, retry]);
+
+  const currentResult =
+    result?.id === transactionId &&
+    result?.retry === retry
+      ? result
+      : null;
+
+  // Preserve existing local simulator transactions.
+  const localTransaction = !isDatabaseTransaction
+    ? getTransactions().find(
+        (item) =>
+          item.id === transactionId &&
+          item.customerId === demoCustomer.id &&
+          item.accountId === demoAccount.id
+      )
+    : null;
+
+  const transaction = isDatabaseTransaction
+    ? currentResult?.transaction
+    : localTransaction;
+
+  const loading =
+    isDatabaseTransaction && !currentResult;
+
+  const completed =
+    transaction?.status === "Completed";
 
   return (
     <main className="flow-page">
       <div className="flow-shell flow-narrow">
+
         <Link className="flow-back" to="/accounts">
           <ArrowLeft size={19} />
           Back to account overview
@@ -53,21 +129,50 @@ function TransactionDetails() {
 
         <div className="flow-page-heading">
           <div>
-            <span className="flow-eyebrow">ACCOUNT ACTIVITY</span>
+            <span className="flow-eyebrow">
+              ACCOUNT ACTIVITY
+            </span>
+
             <h1>Transaction Details</h1>
-            <p>Review the details of your selected transaction.</p>
+
+            <p>
+              Review the details of your selected transaction.
+            </p>
           </div>
         </div>
 
-        {!transaction ? (
-          <div className="flow-panel flow-message" role="alert">
+        {loading ? (
+          <div
+            className="flow-panel flow-message"
+            role="status"
+          >
+            <h2>Loading transaction...</h2>
+          </div>
+        ) : !transaction ? (
+          <div
+            className="flow-panel flow-message"
+            role="alert"
+          >
             <CircleAlert size={34} />
-            <h2>Transaction not found</h2>
+
+            <h2>Transaction unavailable</h2>
 
             <p>
-              This transaction is unavailable or does not belong
-              to the demo account.
+              {currentResult?.error ||
+                "This transaction could not be found."}
             </p>
+
+            {isDatabaseTransaction && (
+              <button
+                type="button"
+                className="flow-button flow-button-secondary"
+                onClick={() =>
+                  setRetry((value) => value + 1)
+                }
+              >
+                Retry
+              </button>
+            )}
 
             <Link
               className="flow-button flow-button-primary"
@@ -78,19 +183,24 @@ function TransactionDetails() {
           </div>
         ) : (
           <section className="flow-panel flow-transaction-details">
+
             <div className="flow-transaction-symbol">
               <ReceiptText size={30} />
             </div>
 
             <p className="flow-muted">
-              {transaction.amount > 0
-                ? "Money received"
-                : "Money sent"}
+              {!completed
+                ? "Transaction amount"
+                : transaction.amount > 0
+                  ? "Money received"
+                  : "Money sent"}
             </p>
 
             <h2
               className={
-                transaction.amount > 0 ? "flow-credit" : ""
+                transaction.amount > 0
+                  ? "flow-credit"
+                  : ""
               }
             >
               {transaction.amount > 0 ? "+" : "−"}
@@ -98,7 +208,10 @@ function TransactionDetails() {
             </h2>
 
             <div className="flow-status">
-              <CircleCheck size={17} />
+              {completed
+                ? <CircleCheck size={17} />
+                : <CircleAlert size={17} />}
+
               {transaction.status}
             </div>
 
@@ -115,7 +228,9 @@ function TransactionDetails() {
 
               <DetailRow
                 label="Date and time"
-                value={`${transaction.date}, ${transaction.time} SGT`}
+                value={
+                  `${transaction.date}, ${transaction.time} SGT`
+                }
               />
 
               <DetailRow
@@ -127,7 +242,10 @@ function TransactionDetails() {
                 }
               />
 
-              <DetailRow label="Currency" value="SGD" />
+              <DetailRow
+                label="Currency"
+                value="SGD"
+              />
 
               <DetailRow
                 label="Counterparty"
@@ -136,28 +254,40 @@ function TransactionDetails() {
 
               <DetailRow
                 label="Counterparty identifier"
-                value={maskIdentifier(transaction.counterpartyNumber)}
+                value={
+                  transaction.counterpartyNumber
+                    ? maskIdentifier(
+                        transaction.counterpartyNumber
+                      )
+                    : "Not available"
+                }
               />
 
               <DetailRow
                 label="Your account"
-                value={maskIdentifier(demoAccount.accountNumber)}
+                value={
+                  isDatabaseTransaction
+                    ? `Account ID: ${transaction.accountId}`
+                    : maskIdentifier(
+                        demoAccount.accountNumber
+                      )
+                }
               />
 
               <DetailRow
                 label="Description"
-                value={transaction.description}
+                value={transaction.description || "—"}
               />
 
               <DetailRow
                 label="Reference number"
-                value={transaction.reference}
+                value={transaction.reference || "—"}
               />
             </dl>
 
             <p className="flow-trust-note">
               <ShieldCheck size={18} />
-              Sample data for prototype demonstration only.
+              Simulated transaction. No real money was sent.
             </p>
 
             <Link
@@ -167,8 +297,10 @@ function TransactionDetails() {
               <ArrowLeft size={18} />
               Back to account overview
             </Link>
+
           </section>
         )}
+
       </div>
     </main>
   );
