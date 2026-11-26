@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 
 import WelcomeBanner from "../components/dashboard/WelcomeBanner";
-
-import "../css/dashboard.css";
-import "../css/everyday-banking.css";
+import "../css/dashboard/dashboard.css";
+import "../css/dashboard/everyday-banking.css"; 
 
 import EverydayBanking from "./dashboard/EverydayBanking";
 import AccountCard from "./dashboard/AccountCard";
