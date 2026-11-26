@@ -1,5 +1,6 @@
-import "../css/navbar.css";
+import "../css/nav/navbar.css";
 import ReventLogo from "./ReventLogo.jsx";
+import RiriHead from "../assets/riri/idle-head.png";
 import { NavLink } from "react-router-dom";
 import {
   Search,
@@ -10,28 +11,28 @@ import {
   Bot,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { logoutCustomer } from '../services/authApi';
+import { logoutCustomer } from "../services/authApi";
 
 function Navbar() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-      const token = sessionStorage.getItem('reventAccessToken');
+    const token = sessionStorage.getItem("reventAccessToken");
 
-      try {
-          if (token) {
-              await logoutCustomer(token);
-          }
-      } catch (error) {
-          console.error('Logout failed:', error.message);
-      } finally {
-          // Remove the customer's stored login session
-          sessionStorage.removeItem('reventAccessToken');
-          sessionStorage.removeItem('reventDemoLogin');
-
-          // Redirect to Login page
-          navigate('/login', { replace: true });
+    try {
+      if (token) {
+        await logoutCustomer(token);
       }
+    } catch (error) {
+      console.error("Logout failed:", error.message);
+    } finally {
+      // Remove the customer's stored login session
+      sessionStorage.removeItem("reventAccessToken");
+      sessionStorage.removeItem("reventDemoLogin");
+
+      // Redirect to Login page
+      navigate("/login", { replace: true });
+    }
   };
   return (
     <header className="navbar">
@@ -104,8 +105,9 @@ function Navbar() {
         </div>
 
         <NavLink to="/scam-chatbot" className="navbar-chatbot">
-          <Bot size={19} />
-          <span>AI Chatbot</span>
+          <img src={RiriHead} alt="" className="navbar-riri-icon" />
+
+          <span>Riri AI</span>
         </NavLink>
       </nav>
     </header>
