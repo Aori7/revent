@@ -1,10 +1,11 @@
-
 import { useState } from "react";
+
 import {
   Link,
   useLocation,
   useNavigate,
 } from "react-router-dom";
+
 import {
   ArrowRight,
   LockKeyhole,
@@ -13,16 +14,23 @@ import {
 } from "lucide-react";
 
 import { demoAccount } from "../data/demoBanking";
+
 import {
-  getSavedReview,
+  restoreSavedPaymentReview,
   invalidateReview,
   readDraft,
   saveDraft,
   saveAnswers,
   validPayment,
 } from "../utils/demoSession";
-import { formatSGD, maskIdentifier } from "../utils/banking";
+
+import {
+  formatSGD,
+  maskIdentifier,
+} from "../utils/banking";
+
 import useTransactionRisk from "../hooks/useTransactionRisk";
+
 import {
   getRiskAssessment,
   saveRiskAssessment,
@@ -32,9 +40,16 @@ import { demoRecipients } from "../utils/payNowRecipients";
 
 import "../css/banking-flow.css";
 
+import useSavedPaymentReview from "../hooks/useSavedPaymentReview";
+
+import {
+  getSavedPaymentReview,
+} from "../services/paymentReviewApi";
+
 export default function Transfer() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const { assess } = useTransactionRisk();
 
   const [form, setForm] = useState(() => {
@@ -42,7 +57,9 @@ export default function Transfer() {
 
     return {
       ...existing,
+
       recipientName: "",
+
       recipientNumber: existing.id
         ? existing.recipientNumber
         : "",
@@ -50,12 +67,22 @@ export default function Transfer() {
   });
 
   const [error, setError] = useState("");
-  const [verifiedRecipient, setVerifiedRecipient] = useState(null);
 
-  const saved = getSavedReview();
+  const [
+    verifiedRecipient,
+    setVerifiedRecipient,
+  ] = useState(null);
+
+  const {
+    saved,
+    savedError,
+  } = useSavedPaymentReview();
 
   function update(field, value) {
-    if (field !== "reference" && value !== form[field]) {
+    if (
+      field !== "reference" &&
+      value !== form[field]
+    ) {
       invalidateReview();
     }
 
@@ -66,7 +93,9 @@ export default function Transfer() {
   }
 
   function changeRecipientNumber(value) {
-    const cleaned = value.replace(/\D/g, "").slice(0, 8);
+    const cleaned = value
+      .replace(/\D/g, "")
+      .slice(0, 8);
 
     if (cleaned !== form.recipientNumber) {
       invalidateReview();
@@ -86,9 +115,13 @@ export default function Transfer() {
     const cleaned = form.recipientNumber.replace(/\D/g, "");
 
     if (!/^[89]\d{7}$/.test(cleaned)) {
-      setError("Enter a valid 8-digit Singapore mobile number.");
+      setError(
+        "Enter a valid 8-digit Singapore mobile number."
+      );
+
       setVerifiedRecipient(null);
       update("recipientName", "");
+
       return;
     }
 
@@ -101,6 +134,7 @@ export default function Transfer() {
 
       setVerifiedRecipient(null);
       update("recipientName", "");
+
       return;
     }
 
@@ -128,7 +162,10 @@ export default function Transfer() {
       verifiedRecipient.mobile !== form.recipientNumber ||
       verifiedRecipient.maskedName !== form.recipientName
     ) {
-      setError("Please verify the recipient before continuing.");
+      setError(
+        "Please verify the recipient before continuing."
+      );
+
       return;
     }
 
@@ -144,16 +181,23 @@ export default function Transfer() {
           demoAccount.balance
         )}.`
       );
+
       return;
     }
 
     if (!/^[89]\d{7}$/.test(form.recipientNumber)) {
-      setError("Enter a valid 8-digit Singapore mobile number.");
+      setError(
+        "Enter a valid 8-digit Singapore mobile number."
+      );
+
       return;
     }
 
     if (!validPayment(form)) {
-      setError("Enter a positive amount with up to two decimal places.");
+      setError(
+        "Enter a positive amount with up to two decimal places."
+      );
+
       return;
     }
 
@@ -162,8 +206,10 @@ export default function Transfer() {
       const previousRisk = getRiskAssessment();
 
       const sameRecipient =
-        String(previous.recipientNumber).replace(/[\s-]/g, "") ===
-        String(form.recipientNumber).replace(/[\s-]/g, "");
+        String(previous.recipientNumber)
+          .replace(/[\s-]/g, "") ===
+        String(form.recipientNumber)
+          .replace(/[\s-]/g, "");
 
       const draft = saveDraft({
         ...form,
@@ -171,13 +217,17 @@ export default function Transfer() {
       });
 
       const riskResult = assess(draft, {
-        ...(sameRecipient
-          ? previousRisk?.recipientContext || {}
-          : {}),
+        ...(
+          sameRecipient
+            ? previousRisk?.recipientContext || {}
+            : {}
+        ),
+
         isNewRecipient: verifiedRecipient.isNewRecipient,
       });
 
       saveRiskAssessment(draft, riskResult);
+
       setError("");
 
       if (
@@ -193,10 +243,20 @@ export default function Transfer() {
     }
   }
 
-  function resume() {
+  async function resume() {
     try {
-      const resumed = saveDraft(saved.draft);
-      saveAnswers(resumed, saved.answers);
+      if (saved?.draft.transferType === "ecommerce") {
+        // Retrieve the latest server-backed saved review.
+        restoreSavedPaymentReview(
+          await getSavedPaymentReview()
+        );
+      } else {
+        // Preserve the existing browser-session behaviour.
+        const resumed = saveDraft(saved.draft);
+
+        saveAnswers(resumed, saved.answers);
+      }
+
       navigate("/transfer/review");
     } catch (err) {
       setError(err.message);
@@ -208,8 +268,12 @@ export default function Transfer() {
       <div className="flow-shell flow-narrow">
         <div className="flow-page-heading">
           <div>
-            <span className="flow-eyebrow">TRANSFER & PAY</span>
+            <span className="flow-eyebrow">
+              TRANSFER & PAY
+            </span>
+
             <h1>Make a payment</h1>
+
             <p>
               Review your payment information before proceeding
               to the safety check.
@@ -223,12 +287,24 @@ export default function Transfer() {
           </p>
         )}
 
+        {savedError && (
+          <p
+            className="flow-inline-error"
+            role="alert"
+          >
+            {savedError}
+          </p>
+        )}
+
         {saved && (
           <section className="flow-saved-banner">
             <BookmarkCheck size={24} />
 
             <div>
-              <strong>You have a saved review</strong>
+              <strong>
+                You have a saved review
+              </strong>
+
               <p>
                 Resume your earlier review for{" "}
                 {saved.draft.recipientName}.
@@ -258,6 +334,7 @@ export default function Transfer() {
             <div className="flow-readonly">
               {demoAccount.type} ·{" "}
               {maskIdentifier(demoAccount.accountNumber)}
+
               <span>
                 {formatSGD(demoAccount.balance)} available
               </span>
@@ -321,6 +398,7 @@ export default function Transfer() {
                     }}
                   >
                     <ShieldCheck size={22} />
+
                     Recipient found
                   </div>
 
@@ -385,7 +463,10 @@ export default function Transfer() {
           </div>
 
           {error && (
-            <p className="flow-inline-error" role="alert">
+            <p
+              className="flow-inline-error"
+              role="alert"
+            >
               {error}
             </p>
           )}
@@ -393,6 +474,7 @@ export default function Transfer() {
           <div className="flow-form-footer">
             <p>
               <ShieldCheck size={18} />
+
               Guided safety review before payment.
             </p>
 
@@ -401,6 +483,7 @@ export default function Transfer() {
               className="flow-button flow-button-primary"
             >
               Continue to safety review
+
               <ArrowRight size={18} />
             </button>
           </div>
@@ -408,10 +491,14 @@ export default function Transfer() {
 
         <div className="flow-trust-note">
           <LockKeyhole size={17} />
+
           No real money is sent.
         </div>
 
-        <Link className="flow-back" to="/">
+        <Link
+          className="flow-back"
+          to="/"
+        >
           Back to home
         </Link>
       </div>

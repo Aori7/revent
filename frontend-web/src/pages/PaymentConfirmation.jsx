@@ -1,14 +1,26 @@
-
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { PhoneOff, ShieldAlert, Check } from "lucide-react";
-import { activeDraft, canConfirm } from "../utils/demoSession";
-import { formatSGD, maskIdentifier } from "../utils/banking";
+
+import {
+  activeDraft,
+  canConfirm,
+  hasCompletedReview,
+} from "../utils/demoSession";
+
+import { reviewAction } from "../services/paymentReviewApi";
+
+import {
+  formatSGD,
+  maskIdentifier,
+} from "../utils/banking";
+
 import {
   getRiskAssessment,
   hasAcknowledgedAlert,
   saveRiskAssessment,
 } from "../utils/riskSession";
+
 import useTransactionRisk from "../hooks/useTransactionRisk";
 import { useSimulator } from "../context/SimulatorContext";
 import usePaymentRestriction from "../utils/usePaymentRestriction";
@@ -21,22 +33,39 @@ import "../css/banking-flow.css";
 export default function PaymentConfirmation() {
   const restriction = usePaymentRestriction();
   const { assess } = useTransactionRisk();
+
   const [actionError, setActionError] = useState("");
 
   const draft = activeDraft();
   const risk = getRiskAssessment();
+
   const isPayNow = draft?.transferType === "paynow";
 
   const { triggers } = useSimulator();
   const isOnCall = triggers.isOnCall;
 
   const [confirmed, setConfirmed] = useState(false);
-  const [callBlocked, setCallBlocked] = useState(false);
-  const [rapidPauseAcknowledged, setRapidPauseAcknowledged] = useState(false);
-  const [detailsAcknowledged, setDetailsAcknowledged] = useState(false);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
-  const { rapidClickDetected, resetRapidClickDetection, recordPaymentClick } =
-    usePaymentBehaviour();
+  const pending = useRef(false);
+
+  const [callBlocked, setCallBlocked] = useState(false);
+
+  const [
+    rapidPauseAcknowledged,
+    setRapidPauseAcknowledged,
+  ] = useState(false);
+
+  const [
+    detailsAcknowledged,
+    setDetailsAcknowledged,
+  ] = useState(false);
+
+  const {
+    rapidClickDetected,
+    resetRapidClickDetection,
+    recordPaymentClick,
+  } = usePaymentBehaviour();
 
   if (!draft) {
     return <Navigate to="/transfer" replace />;
@@ -45,13 +74,16 @@ export default function PaymentConfirmation() {
   if (
     !canConfirm() ||
     risk?.canProceedToConfirmation !== true ||
-    (risk.conditions?.firstTimeRecipient && !hasAcknowledgedAlert(draft))
+    (
+      risk.conditions?.firstTimeRecipient &&
+      !hasAcknowledgedAlert(draft)
+    )
   ) {
     return <Navigate to="/transfer/review" replace />;
   }
 
-  function handleConfirmTransfer() {
-    if (!detailsAcknowledged) {
+  async function handleConfirmTransfer() {
+    if (!detailsAcknowledged || pending.current) {
       return;
     }
 
@@ -66,26 +98,49 @@ export default function PaymentConfirmation() {
     setCallBlocked(false);
 
     // Preserve current and previously detected rapid interactions.
-    if ((rapidClickDetected || click.detected) && !rapidPauseAcknowledged) {
+    if (
+      (rapidClickDetected || click.detected) &&
+      !rapidPauseAcknowledged
+    ) {
       return;
     }
 
     if (confirmed) return;
 
+    pending.current = true;
+    setConfirmBusy(true);
+
     try {
-      const fresh = assess(draft, risk.recipientContext);
+      const fresh = assess(
+        draft,
+        risk.recipientContext
+      );
 
       saveRiskAssessment(draft, fresh);
 
       if (
         !canConfirm() ||
         !fresh.canProceedToConfirmation ||
-        (fresh.conditions.firstTimeRecipient && !hasAcknowledgedAlert(draft))
+        (
+          fresh.conditions.firstTimeRecipient &&
+          !hasAcknowledgedAlert(draft)
+        )
       ) {
         setActionError(
-          fresh.restrictionReason || "Please review this payment again.",
+          fresh.restrictionReason ||
+            "Please review this payment again."
         );
+
         return;
+      }
+
+      // Connect completed e-commerce reviews to the backend.
+      // Preserve the existing flows for other payment methods.
+      if (
+        draft.transferType === "ecommerce" &&
+        hasCompletedReview(draft)
+      ) {
+        await reviewAction("confirm", draft);
       }
 
       setActionError("");
@@ -93,10 +148,14 @@ export default function PaymentConfirmation() {
       // Preserve the existing simulated confirmation.
       // This does not create a completed bank transaction.
       setConfirmed(true);
-    } catch {
+    } catch (error) {
       setActionError(
-        "Payment check unavailable. Try again or return to the safety review.",
+        error.message ||
+          "Payment check unavailable. Try again or return to the safety review."
       );
+    } finally {
+      pending.current = false;
+      setConfirmBusy(false);
     }
   }
 
@@ -126,10 +185,16 @@ export default function PaymentConfirmation() {
 
               <div className="transfer-confirmed__notice">
                 <ShieldAlert size={18} />
-                <span>Demo transaction. No real money was sent.</span>
+
+                <span>
+                  Demo transaction. No real money was sent.
+                </span>
               </div>
 
-              <Link to="/" className="transfer-confirmed__home">
+              <Link
+                to="/"
+                className="transfer-confirmed__home"
+              >
                 Back to Home
               </Link>
             </div>
@@ -153,7 +218,9 @@ export default function PaymentConfirmation() {
 
                 <div className="flow-detail-row">
                   <dt>Account / mobile</dt>
-                  <dd>{maskIdentifier(draft.recipientNumber)}</dd>
+                  <dd>
+                    {maskIdentifier(draft.recipientNumber)}
+                  </dd>
                 </div>
 
                 <div className="flow-detail-row">
@@ -163,6 +230,7 @@ export default function PaymentConfirmation() {
 
                 <div className="flow-detail-row">
                   <dt>Payment method</dt>
+
                   <dd>
                     {draft.transferType === "paynow"
                       ? "PayNow"
@@ -202,9 +270,13 @@ export default function PaymentConfirmation() {
               </p>
 
               {callBlocked && isOnCall && (
-                <div className="call-safety-warning" role="alert">
+                <div
+                  className="call-safety-warning"
+                  role="alert"
+                >
                   <div className="call-safety-heading">
                     <ShieldAlert size={28} />
+
                     <h2>Transfer Temporarily Blocked</h2>
                   </div>
 
@@ -221,7 +293,9 @@ export default function PaymentConfirmation() {
                     <PhoneOff size={24} />
 
                     <div>
-                      <strong>End your call before proceeding</strong>
+                      <strong>
+                        End your call before proceeding
+                      </strong>
 
                       <p>
                         Once your call has ended, you can try confirming your
@@ -233,12 +307,16 @@ export default function PaymentConfirmation() {
               )}
 
               {rapidClickDetected && (
-                <div className="confirmation-activity-alert" role="alert">
+                <div
+                  className="confirmation-activity-alert"
+                  role="alert"
+                >
                   <div className="confirmation-activity-alert__heading">
                     <ShieldAlert size={24} />
 
                     <div>
                       <h2>Unusual payment activity</h2>
+
                       <p>
                         Multiple payment actions were detected in a short time.
                       </p>
@@ -248,7 +326,9 @@ export default function PaymentConfirmation() {
                   <div className="confirmation-activity-alert__details">
                     <span>You're sending</span>
 
-                    <strong>{formatSGD(draft.amount)}</strong>
+                    <strong>
+                      {formatSGD(draft.amount)}
+                    </strong>
 
                     <span>
                       to <b>{draft.recipientName}</b>
@@ -278,7 +358,10 @@ export default function PaymentConfirmation() {
               )}
 
               {actionError && (
-                <p className="flow-inline-error" role="alert">
+                <p
+                  className="flow-inline-error"
+                  role="alert"
+                >
                   {actionError}
                 </p>
               )}
@@ -294,8 +377,8 @@ export default function PaymentConfirmation() {
 
                 <span>
                   I've verified that I'm sending{" "}
-                  <strong>{formatSGD(draft.amount)}</strong> to{" "}
-                  <strong>{draft.recipientName}</strong>.
+                  <strong>{formatSGD(draft.amount)}</strong>{" "}
+                  to <strong>{draft.recipientName}</strong>.
                 </span>
               </label>
 
@@ -304,9 +387,13 @@ export default function PaymentConfirmation() {
                 className="confirm-transfer-btn"
                 onClick={handleConfirmTransfer}
                 disabled={
+                  confirmBusy ||
                   Boolean(restriction) ||
                   !detailsAcknowledged ||
-                  (rapidClickDetected && !rapidPauseAcknowledged) ||
+                  (
+                    rapidClickDetected &&
+                    !rapidPauseAcknowledged
+                  ) ||
                   isOnCall
                 }
               >
@@ -314,12 +401,18 @@ export default function PaymentConfirmation() {
               </button>
 
               <div className="flow-button-row">
-                <Link to="/transfer/ecommerce" className="flow-button">
+                <Link
+                  to="/transfer/ecommerce"
+                  className="flow-button"
+                >
                   Edit payment
                 </Link>
 
                 {(risk?.level !== "low" || actionError) && (
-                  <Link to="/transfer/review" className="flow-button">
+                  <Link
+                    to="/transfer/review"
+                    className="flow-button"
+                  >
                     Back to safety review
                   </Link>
                 )}
