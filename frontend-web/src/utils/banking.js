@@ -22,7 +22,19 @@ export function draftSignature(draft) {
   });
 }
 
+// Payment purpose categories
+export const paymentPurposes = [
+  ["shopping", "Online shopping"],
+  ["personal", "Friends & family"],
+  ["bills", "Bills & official payments"],
+  ["investment", "Investment"],
+  ["job", "Job & business"],
+  ["general", "Other / Not sure"],
+];
+
+// Retain previous answer fields for compatibility.
 export const defaultAnswers = {
+  purpose: "",
   extraFee: "",
   disclosed: "",
   source: "",
@@ -30,112 +42,310 @@ export const defaultAnswers = {
   urgency: "",
   reviews: "",
   secrecy: "",
+  newContact: "",
+  unexpectedRequest: "",
+  guaranteedReturns: "",
+  upfrontFee: "",
+  purposeKnown: "",
+  recipientSource: "",
+  amountConfirmed: "",
 };
 
-export function visibleQuestions(answers) {
+const categoryQuestions = {
+  shopping: "disclosed",
+  personal: "newContact",
+  bills: "unexpectedRequest",
+  investment: "guaranteedReturns",
+  job: "upfrontFee",
+  general: "purposeKnown",
+};
+
+// Existing transaction risk conditions
+export function getReviewContext(draft, assessment) {
+  return {
+    firstTimeRecipient:
+      assessment?.conditions?.firstTimeRecipient === true,
+
+    largeAmount:
+      Number(draft?.amount) > 1000,
+  };
+}
+
+// Keep the questionnaire short and relevant.
+export function visibleQuestions(answers = {}, context = {}) {
+  if (
+    !paymentPurposes.some(
+      ([value]) => value === answers.purpose
+    )
+  ) {
+    return ["purpose"];
+  }
+
   return [
-    "extraFee",
-    ...(answers.extraFee === "yes" ? ["disclosed"] : []),
-    "source",
+    "purpose",
+
+    // One category-specific question
+    categoryQuestions[answers.purpose],
+
+    // Common recipient verification
     "identity",
+
+    // Additional check only for large payments
+    ...(context.largeAmount
+      ? ["amountConfirmed"]
+      : []),
+
+    // Combined pressure and secrecy check
     "urgency",
-    ...(["social", "unknown"].includes(answers.source) ? ["reviews"] : []),
-    ...(answers.urgency === "yes" ? ["secrecy"] : []),
   ];
 }
 
-export function cleanAnswers(answers) {
-  const visible = visibleQuestions(answers);
+// Remove answers that are no longer relevant.
+export function cleanAnswers(answers = {}, context) {
+  const visible = new Set(
+    visibleQuestions(answers, context)
+  );
+
+  // Preserve previously saved Sprint 1 answers
+  // until a payment purpose is selected.
+  if (!answers.purpose) {
+    visible.add("extraFee");
+    visible.add("source");
+    visible.add("identity");
+    visible.add("urgency");
+
+    if (answers.extraFee === "yes") {
+      visible.add("disclosed");
+    }
+
+    if (["social", "unknown"].includes(answers.source)) {
+      visible.add("reviews");
+    }
+
+    if (answers.urgency === "yes") {
+      visible.add("secrecy");
+    }
+  }
+
+  // Preserve the amount verification answer when
+  // saving or restoring browser-session data.
+  if (
+    context === undefined &&
+    paymentPurposes.some(
+      ([value]) => value === answers.purpose
+    )
+  ) {
+    visible.add("amountConfirmed");
+  }
 
   return Object.fromEntries(
     Object.keys(defaultAnswers).map((key) => [
       key,
-      visible.includes(key) ? answers[key] || "" : "",
+      visible.has(key)
+        ? answers[key] || ""
+        : "",
     ])
   );
 }
 
-export function unansweredQuestions(answers) {
-  return visibleQuestions(answers).filter((key) => !answers[key]);
+export function unansweredQuestions(
+  answers = {},
+  context
+) {
+  return visibleQuestions(answers, context).filter(
+    (key) => !answers[key]
+  );
 }
 
-export function generatePaymentAdvice(answers) {
-  const concerns = [];
-  const steps = [];
+function collectRiskFactors(answers) {
+  const factors = [];
 
-  if (answers.extraFee === "unsure" || answers.disclosed === "unsure") {
-    concerns.push(
-      "It is unclear whether an additional fee was requested or disclosed."
+  function add(points, message, advice) {
+    factors.push({
+      points,
+      message,
+      advice,
+    });
+  }
+
+  // Recipient identity
+  if (answers.identity === "no") {
+    add(
+      25,
+      "Recipient not verified",
+      "Verify the recipient through a trusted channel."
     );
-    steps.push(
-      "Compare the request with your original order and check the amount with the seller independently."
+  } else if (answers.identity === "unsure") {
+    add(
+      15,
+      "Recipient identity uncertain",
+      "Confirm who will receive this payment."
     );
   }
 
-  if (answers.extraFee === "yes" && answers.disclosed === "no") {
-    concerns.push(
-      "The seller requested a fee that was not disclosed before your earlier payment."
-    );
-    steps.push(
-      "Check the original invoice and verify the extra charge through the marketplace before paying."
-    );
-  }
-
-  if (answers.urgency === "unsure") {
-    concerns.push("You are unsure whether you are being pressured to pay.");
-    steps.push("Take time to check the request independently.");
-  }
-
-  if (["social", "unknown"].includes(answers.source)) {
-    concerns.push(
-      "The seller was found through a channel where identities can be difficult to verify."
-    );
-    steps.push(
-      "Look up the seller independently rather than using links or contact details they sent you."
-    );
-  }
-
-  if (answers.reviews === "no" || answers.reviews === "unsure") {
-    concerns.push("Independent seller feedback has not been confirmed.");
-    steps.push(
-      "Check independent reviews and whether the merchant has an established history."
-    );
-  }
-
-  if (answers.identity !== "yes") {
-    concerns.push(
-      "The recipient's identity has not been independently verified."
-    );
-    steps.push(
-      "Confirm the recipient and payment details through a trusted channel before paying."
-    );
-  }
-
+  // Payment pressure or secrecy
   if (answers.urgency === "yes") {
-    concerns.push("Pressure to pay quickly is a common scam warning sign.");
-    steps.push(
-      "Pause the payment. A legitimate seller should allow time for verification."
+    add(
+      20,
+      "Payment pressure or secrecy",
+      "Pause and verify the request."
+    );
+  } else if (answers.urgency === "unsure") {
+    add(
+      10,
+      "Possible payment pressure",
+      "Take time to check the request."
     );
   }
 
+  // Retain support for older saved answers.
   if (answers.secrecy === "yes") {
-    concerns.push(
-      "Being asked to keep a payment secret is a strong warning sign."
-    );
-    steps.push(
-      "Do not proceed until you speak with someone you trust or contact the merchant independently."
+    add(
+      25,
+      "Asked to keep payment secret",
+      "Speak to someone you trust."
     );
   }
+
+  // Online shopping
+  if (answers.purpose === "shopping") {
+    if (answers.disclosed === "no") {
+      add(
+        20,
+        "Undisclosed charges",
+        "Check the original order or invoice."
+      );
+    } else if (answers.disclosed === "unsure") {
+      add(
+        10,
+        "Payment charges unclear",
+        "Verify the charges before paying."
+      );
+    }
+  }
+
+  // Friends and family
+  if (answers.purpose === "personal") {
+    if (answers.newContact === "yes") {
+      add(
+        20,
+        "Unfamiliar contact number",
+        "Call their usual number to verify."
+      );
+    } else if (answers.newContact === "unsure") {
+      add(
+        10,
+        "Contact number uncertain",
+        "Confirm the person's identity."
+      );
+    }
+  }
+
+  // Bills and official payments
+  if (answers.purpose === "bills") {
+    if (answers.unexpectedRequest === "yes") {
+      add(
+        20,
+        "Unexpected payment request",
+        "Contact the organisation directly."
+      );
+    } else if (answers.unexpectedRequest === "unsure") {
+      add(
+        10,
+        "Payment request uncertain",
+        "Check through official channels."
+      );
+    }
+  }
+
+  // Investment
+  if (answers.purpose === "investment") {
+    if (answers.guaranteedReturns === "yes") {
+      add(
+        30,
+        "Promised guaranteed high returns",
+        "Verify the investment provider independently."
+      );
+    } else if (answers.guaranteedReturns === "unsure") {
+      add(
+        10,
+        "Investment terms uncertain",
+        "Review the investment terms."
+      );
+    }
+  }
+
+  // Job and business
+  if (answers.purpose === "job") {
+    if (answers.upfrontFee === "yes") {
+      add(
+        30,
+        "Upfront payment requested",
+        "Verify the opportunity before paying."
+      );
+    } else if (answers.upfrontFee === "unsure") {
+      add(
+        10,
+        "Upfront payment unclear",
+        "Confirm why payment is required."
+      );
+    }
+  }
+
+  // General payment
+  if (answers.purpose === "general") {
+    if (answers.purposeKnown === "no") {
+      add(
+        25,
+        "Payment purpose unclear",
+        "Do not pay until you understand the request."
+      );
+    } else if (answers.purposeKnown === "unsure") {
+      add(
+        15,
+        "Uncertain payment purpose",
+        "Clarify the reason for payment."
+      );
+    }
+  }
+
+  // Large transaction
+  if (answers.amountConfirmed === "no") {
+    add(
+      20,
+      "Payment amount not confirmed",
+      "Confirm the amount before paying."
+    );
+  } else if (answers.amountConfirmed === "unsure") {
+    add(
+      10,
+      "Payment amount uncertain",
+      "Check the requested amount."
+    );
+  }
+
+  return factors;
+}
+
+// Preserve personalised advice functionality.
+export function generatePaymentAdvice(answers) {
+  const factors = collectRiskFactors(answers);
+
+  const concerns = factors.map(
+    (factor) => factor.message
+  );
+
+  const steps = [
+    ...new Set(
+      factors.map((factor) => factor.advice)
+    ),
+  ];
 
   if (steps.length === 0) {
     steps.push(
-      "Confirm the amount, recipient details and order information before proceeding."
+      "Check the recipient and amount before paying."
     );
   }
-
-  steps.push(
-    "If anything feels suspicious, cancel the payment and verify with the bank using its official channels."
-  );
 
   return {
     concerns,
@@ -144,96 +354,94 @@ export function generatePaymentAdvice(answers) {
   };
 }
 
-export function calculatePaymentRisk(answers, assessment) {
-  let score = 0;
-  const factors = [];
+// Prevent proceeding with serious warning signs.
+export function hasSeriousReviewWarning(answers) {
+  return (
+    answers.identity !== "yes" ||
+    answers.urgency === "yes" ||
+    answers.secrecy === "yes" ||
 
-  function addRisk(points, message) {
-    score += points;
-    factors.push({
-      points,
-      message,
-    });
-  }
+    (
+      answers.purpose === "shopping" &&
+      answers.disclosed !== "yes"
+    ) ||
 
-  // Existing transaction risk assessment
+    (
+      answers.extraFee === "yes" &&
+      answers.disclosed !== "yes"
+    ) ||
+
+    answers.guaranteedReturns === "yes" ||
+    answers.upfrontFee === "yes" ||
+
+    ["no", "unsure"].includes(
+      answers.purposeKnown
+    ) ||
+
+    ["no", "unsure"].includes(
+      answers.amountConfirmed
+    )
+  );
+}
+
+// Existing percentage-based risk summary
+export function calculatePaymentRisk(
+  answers,
+  assessment
+) {
+  const factors = collectRiskFactors(answers);
+
   const riskLevel = String(
     assessment?.level || "low"
   ).toLowerCase();
 
+  // Preserve detected transaction risk.
   if (riskLevel === "high") {
-    addRisk(30, "Transaction flagged as high risk");
-  } else if (riskLevel === "medium" || riskLevel === "moderate") {
-    addRisk(15, "Unusual transaction activity detected");
-  }
-
-  // Recipient identity
-  if (answers.identity === "no") {
-    addRisk(25, "Recipient identity not verified");
-  } else if (answers.identity === "unsure") {
-    addRisk(15, "Recipient identity is uncertain");
-  }
-
-  // Payment pressure
-  if (answers.urgency === "yes") {
-    addRisk(20, "You're being pressured to pay quickly");
-  } else if (answers.urgency === "unsure") {
-    addRisk(10, "Possible payment pressure");
-  }
-
-  // Secrecy
-  if (answers.secrecy === "yes") {
-    addRisk(25, "You were asked to keep the payment secret");
-  }
-
-  // Unexpected additional fees
-  if (
-    answers.extraFee === "yes" &&
-    answers.disclosed === "no"
-  ) {
-    addRisk(20, "An unexpected additional fee was requested");
+    factors.push({
+      points: 30,
+      message: "High-risk transaction detected",
+      advice: "Pause and verify this payment.",
+    });
   } else if (
-    answers.extraFee === "unsure" ||
-    (
-      answers.extraFee === "yes" &&
-      answers.disclosed === "unsure"
-    )
+    ["medium", "moderate"].includes(riskLevel)
   ) {
-    addRisk(10, "Additional fee details are unclear");
+    factors.push({
+      points: 15,
+
+      message:
+        assessment?.conditions?.firstTimeRecipient
+          ? "First-time recipient"
+          : "Unusual transaction activity",
+
+      advice: "Confirm the payment details.",
+    });
   }
 
-  // Seller source
-  if (answers.source === "social") {
-    addRisk(10, "Seller found through social media or messaging");
-  } else if (answers.source === "unknown") {
-    addRisk(10, "Seller source is unknown");
-  }
-
-  // Independent reviews
-  if (answers.reviews === "no") {
-    addRisk(10, "Seller reviews have not been checked");
-  } else if (answers.reviews === "unsure") {
-    addRisk(5, "Seller reputation is uncertain");
-  }
-
-  const percentage = Math.min(100, score);
+  const percentage = Math.min(
+    100,
+    factors.reduce(
+      (total, factor) => total + factor.points,
+      0
+    )
+  );
 
   let level = "Low";
-  let recommendation =
-    "Check the recipient and payment details before proceeding.";
 
   if (percentage >= 70) {
     level = "High";
-    recommendation =
-      "Pause this payment. Verify the recipient through an independent, trusted channel.";
   } else if (percentage >= 35) {
     level = "Moderate";
-    recommendation =
-      "Verify the recipient and payment request before continuing.";
   }
 
-  // Highest-scoring concerns first
-  factors.sort((a, b) => b.points - a.points);
+  factors.sort(
+    (a, b) => b.points - a.points
+  );
+
+  const recommendation =
+    hasSeriousReviewWarning(answers)
+      ? "Verify the request before proceeding."
+      : factors[0]?.advice ||
+        "Check the recipient and amount before paying.";
 
   return {
     percentage,
