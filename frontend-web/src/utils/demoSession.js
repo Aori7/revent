@@ -1,4 +1,3 @@
-
 import {
   startingPayment,
   demoCustomer,
@@ -11,6 +10,7 @@ import {
   defaultAnswers,
   unansweredQuestions,
 } from "./banking.js";
+
 import { getRiskAssessment } from "./riskSession.js";
 
 const DRAFT = "revent.demo.paymentDraft";
@@ -45,7 +45,9 @@ export function validPayment(draft) {
   return (
     typeof draft?.recipientName === "string" &&
     Boolean(draft.recipientName.trim()) &&
-    /^\d{8,16}$/.test(String(draft.recipientNumber).replace(/[\s-]/g, "")) &&
+    /^\d{8,16}$/.test(
+      String(draft.recipientNumber).replace(/[\s-]/g, "")
+    ) &&
     /^\d+(\.\d{1,2})?$/.test(String(draft.amount)) &&
     Number(draft.amount) > 0 &&
     Number(draft.amount) <= demoAccount.balance
@@ -114,7 +116,9 @@ export function saveDraft(form) {
   }
 
   const old = activeDraft();
-  const changed = !old || draftSignature(old) !== draftSignature(form);
+
+  const changed =
+    !old || draftSignature(old) !== draftSignature(form);
 
   if (changed) invalidateReview();
 
@@ -126,6 +130,7 @@ export function saveDraft(form) {
   };
 
   sessionStorage.setItem(DRAFT, JSON.stringify(draft));
+
   return draft;
 }
 
@@ -172,6 +177,7 @@ export function saveReviewForLater(customerId, draft, answers) {
   };
 
   sessionStorage.setItem(SAVED, JSON.stringify(record));
+
   return record;
 }
 
@@ -219,6 +225,34 @@ export function completeReview(draft, answers) {
   sessionStorage.setItem(COMPLETED, JSON.stringify(record));
 }
 
+// Restore the server's original review ID and version,
+// rather than creating a new draft.
+export function restoreSavedPaymentReview(saved) {
+  const draft = saved?.draft;
+
+  if (
+    !owned(draft) ||
+    !draft.id ||
+    !Number.isSafeInteger(draft.version) ||
+    draft.version < 1 ||
+    !validPayment(draft)
+  ) {
+    throw new Error("The saved payment review is no longer available.");
+  }
+
+  invalidateReview();
+
+  sessionStorage.setItem(DRAFT, JSON.stringify(draft));
+
+  saveAnswers(draft, saved.answers || {});
+
+  return draft;
+}
+
+export function hasCompletedReview(draft) {
+  return matches(readJson(COMPLETED), draft);
+}
+
 export function canConfirm() {
   const draft = activeDraft();
 
@@ -233,6 +267,7 @@ export function canConfirm() {
   }
 
   const risk = getRiskAssessment();
+
   return risk?.level === "low";
 }
 
@@ -247,5 +282,6 @@ export async function cancelPayment(draft) {
   }
 
   invalidateReview();
+
   sessionStorage.removeItem(DRAFT);
 }

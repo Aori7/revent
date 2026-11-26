@@ -1,12 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { CircleAlert } from "lucide-react";
 import { ShieldAlert } from "lucide-react";
+
 import PaymentReviewContent from "./PaymentReviewContent";
 import RecipientPaymentHistory from "../components/RecipientPaymentHistory";
 import useTransactionRisk from "../hooks/useTransactionRisk";
+
 import { activeDraft } from "../utils/demoSession";
 import { formatSGD, maskIdentifier } from "../utils/banking";
+
 import {
   acknowledgeAlert,
   clearRiskAssessment,
@@ -15,14 +17,17 @@ import {
   paymentKey,
   saveRiskAssessment,
 } from "../utils/riskSession";
+
 import usePaymentRestriction from "../utils/usePaymentRestriction";
+import { reviewAction } from "../services/paymentReviewApi";
 
 import "../css/banking-flow.css";
 import "../css/payment-review-popup.css";
 
 export default function PaymentReview() {
   const navigate = useNavigate();
-  const [needsHelp, setNeedsHelp] = useState(false);
+  const [needsHelp] = useState(false);
+
   const { assess } = useTransactionRisk();
   const restriction = usePaymentRestriction();
 
@@ -31,6 +36,7 @@ export default function PaymentReview() {
 
   const dialogRef = useRef(null);
   const contentRef = useRef(null);
+
   const contextRef = useRef({
     key: "",
     value: {},
@@ -40,6 +46,9 @@ export default function PaymentReview() {
   const [result, setResult] = useState(null);
   const [acknowledged, setAcknowledged] = useState("");
   const [actionError, setActionError] = useState("");
+
+  const ackPending = useRef(false);
+  const [ackBusy, setAckBusy] = useState(false);
 
   useEffect(() => {
     const refresh = () => setRetry((value) => value + 1);
@@ -69,9 +78,86 @@ export default function PaymentReview() {
     clearRiskAssessment();
 
     Promise.resolve()
-      .then(() => assess(current, contextRef.current.value))
+      .then(async () => {
+        // Preserve the existing simulator risk assessment.
+        const local = await assess(
+          current,
+          contextRef.current.value
+        );
+
+        // The payment review backend currently supports
+        // e-commerce payments.
+        if (current.transferType !== "ecommerce") {
+          return local;
+        }
+
+        // Connect to the existing backend assessment API.
+        const response = await reviewAction("assess", current);
+
+        const server = response.risk;
+
+        if (!server || typeof server.blocked !== "boolean") {
+          throw new Error(
+            "The payment safety response is incomplete."
+          );
+        }
+
+        const score = Math.max(
+          local.score,
+          server.score || 0
+        );
+
+        // Preserve local checks while applying server restrictions.
+        return {
+          ...local,
+
+          score,
+
+          level:
+            score >= 60
+              ? "high"
+              : score >= 30
+                ? "medium"
+                : "low",
+
+          requiresReview:
+            local.requiresReview || server.requiresReview,
+
+          conditions: {
+            ...local.conditions,
+
+            firstTimeRecipient:
+              local.conditions.firstTimeRecipient ||
+              server.firstTimeRecipient,
+          },
+
+          canProceedToConfirmation:
+            local.canProceedToConfirmation &&
+            !server.blocked,
+
+          restrictionReason:
+            server.blocked
+              ? server.reason
+              : local.restrictionReason,
+
+          reasons: [
+            ...new Set([
+              ...local.reasons,
+              ...(server.reason ? [server.reason] : []),
+            ]),
+          ],
+
+          serverAcknowledged:
+            response.acknowledged === true,
+        };
+      })
       .then((assessment) => {
-        if (cancelled || paymentKey(activeDraft()) !== key) return;
+        if (
+          cancelled ||
+          paymentKey(activeDraft()) !== key
+        ) {
+          return;
+        }
 
         saveRiskAssessment(current, assessment);
 
@@ -114,9 +200,17 @@ export default function PaymentReview() {
     assessment?.conditions?.firstTimeRecipient === true;
 
   const showAlert =
-    (firstTimeRecipient || assessment?.requiresReview === true) &&
-    acknowledged !== key &&
-    !hasAcknowledgedAlert(draft);
+    (
+      firstTimeRecipient ||
+      assessment?.requiresReview === true
+    ) &&
+    (
+      draft?.transferType === "ecommerce" &&
+      assessment?.serverAcknowledged === false
+        ? acknowledged !== key
+        : acknowledged !== key &&
+          !hasAcknowledgedAlert(draft)
+    );
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
@@ -126,7 +220,9 @@ export default function PaymentReview() {
     }
 
     return () => {
-      if (dialog?.open) dialog.close();
+      if (dialog?.open) {
+        dialog.close();
+      }
     };
   }, [showAlert]);
 
@@ -138,19 +234,42 @@ export default function PaymentReview() {
     navigate("/transfer/ecommerce");
   }
 
-  function openReview() {
+  async function openReview() {
+    if (ackPending.current) return;
+
+    ackPending.current = true;
+    setAckBusy(true);
+
     try {
+      // Save acknowledgement through the existing backend.
+      if (draft.transferType === "ecommerce") {
+        await reviewAction("ack", draft);
+
+        if (paymentKey(activeDraft()) !== key) {
+          throw new Error(
+            "Payment details have changed."
+          );
+        }
+      }
+
+      // Preserve the existing browser-session acknowledgement.
       acknowledgeAlert(draft);
+
       setAcknowledged(key);
       setActionError("");
 
       dialogRef.current?.close();
 
-      const heading = contentRef.current?.querySelector("h1");
+      const heading =
+        contentRef.current?.querySelector("h1");
+
       heading?.setAttribute("tabindex", "-1");
       heading?.focus();
     } catch (error) {
       setActionError(error.message);
+    } finally {
+      ackPending.current = false;
+      setAckBusy(false);
     }
   }
 
@@ -158,7 +277,10 @@ export default function PaymentReview() {
     return (
       <main className="flow-page">
         <div className="flow-shell flow-narrow">
-          <section className="flow-panel" aria-busy={!currentResult?.error}>
+          <section
+            className="flow-panel"
+            aria-busy={!currentResult?.error}
+          >
             <h1>
               {currentResult?.error
                 ? "Payment check unavailable"
@@ -176,7 +298,9 @@ export default function PaymentReview() {
                 <button
                   type="button"
                   className="flow-button flow-button-primary"
-                  onClick={() => setRetry((value) => value + 1)}
+                  onClick={() =>
+                    setRetry((value) => value + 1)
+                  }
                 >
                   Retry assessment
                 </button>
@@ -195,7 +319,9 @@ export default function PaymentReview() {
           {currentResult?.error && (
             <RecipientPaymentHistory
               draft={draft}
-              onRetry={() => setRetry((value) => value + 1)}
+              onRetry={() =>
+                setRetry((value) => value + 1)
+              }
             />
           )}
         </div>
@@ -206,7 +332,10 @@ export default function PaymentReview() {
   return (
     <>
       <div ref={contentRef}>
-        <PaymentReviewContent key={key} assessment={assessment} />
+        <PaymentReviewContent
+          key={key}
+          assessment={assessment}
+        />
       </div>
 
       <dialog
@@ -246,12 +375,16 @@ export default function PaymentReview() {
 
             <p>
               To <b>{draft.recipientName}</b>
-              <span> ({maskIdentifier(draft.recipientNumber)})</span>
+              <span>
+                {" "}({maskIdentifier(draft.recipientNumber)})
+              </span>
             </p>
           </div>
 
           <div className="payment-review-popup__question">
-            <h3>Have you verified this recipient's identity independently?</h3>
+            <h3>
+              Have you verified this recipient's identity independently?
+            </h3>
 
             <p>
               For example, by contacting them through a number you already
@@ -260,7 +393,10 @@ export default function PaymentReview() {
           </div>
 
           {actionError && (
-            <p className="payment-review-popup__error" role="alert">
+            <p
+              className="payment-review-popup__error"
+              role="alert"
+            >
               {actionError}
             </p>
           )}
@@ -270,6 +406,7 @@ export default function PaymentReview() {
               type="button"
               className="payment-review-popup__primary"
               onClick={openReview}
+              disabled={ackBusy}
             >
               No, help me check
             </button>
@@ -278,6 +415,7 @@ export default function PaymentReview() {
               type="button"
               className="payment-review-popup__secondary"
               onClick={openReview}
+              disabled={ackBusy}
             >
               Yes, I've verified
             </button>
@@ -286,13 +424,17 @@ export default function PaymentReview() {
               type="button"
               className="payment-review-popup__cancel"
               onClick={goBack}
+              disabled={ackBusy}
             >
               Go back
             </button>
           </div>
 
           {needsHelp && (
-            <div className="payment-review-popup__help" role="status">
+            <div
+              className="payment-review-popup__help"
+              role="status"
+            >
               <h3>Here's how to verify safely</h3>
 
               <p>

@@ -1,12 +1,13 @@
-
 import { useEffect, useRef, useState } from "react";
 import RecipientPaymentHistory from "../components/RecipientPaymentHistory";
+
 import {
   Link,
   Navigate,
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -46,6 +47,7 @@ import {
 } from "../utils/riskSession";
 
 import usePaymentRestriction from "../utils/usePaymentRestriction";
+import { reviewAction } from "../services/paymentReviewApi";
 
 import "../css/banking-flow.css";
 import "../css/payment-review-notice.css";
@@ -56,7 +58,10 @@ const yesNo = [
   ["no", "No"],
 ];
 
-const yesNoUnsure = [...yesNo, ["unsure", "Not sure"]];
+const yesNoUnsure = [
+  ...yesNo,
+  ["unsure", "Not sure"],
+];
 
 const questions = [
   {
@@ -92,7 +97,8 @@ const questions = [
     id: "urgency",
     label:
       "Are you being pressured to pay before independently checking the request?",
-    description: "Examples include threats, countdowns or urgent requests.",
+    description:
+      "Examples include threats, countdowns or urgent requests.",
     options: yesNoUnsure,
   },
   {
@@ -105,7 +111,8 @@ const questions = [
   {
     id: "secrecy",
     label: "Were you told to keep this payment secret?",
-    description: "This question appears because you reported payment pressure.",
+    description:
+      "This question appears because you reported payment pressure.",
     options: yesNo,
   },
 ];
@@ -116,7 +123,11 @@ export default function PaymentReview({ assessment }) {
   const restriction = usePaymentRestriction();
 
   const [draft] = useState(activeDraft);
-  const [answers, setAnswers] = useState(() => readAnswers(draft));
+
+  const [answers, setAnswers] = useState(() =>
+    readAnswers(draft)
+  );
+
   const [showSummary, setShowSummary] = useState(false);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [missing, setMissing] = useState([]);
@@ -124,18 +135,24 @@ export default function PaymentReview({ assessment }) {
   const [saveMessage, setSaveMessage] = useState(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [busy, setBusy] = useState(false);
 
+  const actionPending = useRef(false);
   const savingRef = useRef(false);
   const timerRef = useRef(null);
   const cancelPending = useRef(false);
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     };
   }, []);
 
   function answerQuestion(id, value) {
+    if (actionPending.current) return;
+
     const updated = cleanAnswers({
       ...answers,
       [id]: value,
@@ -154,7 +171,9 @@ export default function PaymentReview({ assessment }) {
     }
   }
 
-  function generateSummary() {
+  async function generateSummary() {
+    if (actionPending.current) return;
+
     const unanswered = unansweredQuestions(answers);
 
     setMissing(unanswered);
@@ -173,54 +192,98 @@ export default function PaymentReview({ assessment }) {
       return;
     }
 
+    actionPending.current = true;
+    setBusy(true);
+
     try {
+      // Submit the guided review answers to the backend.
+      if (draft.transferType === "ecommerce") {
+        await reviewAction("summary", draft, answers);
+      }
+
+      // Preserve existing browser-session functionality.
       saveAnswers(draft, answers);
+
       setShowSummary(true);
     } catch (err) {
       setShowSummary(false);
-      setActionError(err.message);
+
+      setActionError(
+        err.message || "Unable to generate the safety summary."
+      );
+    } finally {
+      actionPending.current = false;
+      setBusy(false);
     }
   }
 
   function saveForLater() {
-    if (savingRef.current) return;
+    if (savingRef.current || actionPending.current) {
+      return;
+    }
 
+    actionPending.current = true;
     savingRef.current = true;
+
+    setBusy(true);
     setSaving(true);
     setSaveMessage(null);
+    setActionError("");
 
-    timerRef.current = setTimeout(() => {
+    timerRef.current = setTimeout(async () => {
       try {
         // Keep the existing save-failure test option.
         if (params.get("save") === "error") {
           throw new Error("Demo save failure");
         }
 
+        // Save e-commerce reviews through Express and Supabase.
+        if (draft.transferType === "ecommerce") {
+          await reviewAction("save", draft, answers);
+        }
+
         // Use the signed-in customer's ID from this draft.
-        saveReviewForLater(draft.customerId, draft, answers);
+        saveReviewForLater(
+          draft.customerId,
+          draft,
+          answers
+        );
 
         setSaveMessage({
           type: "success",
           text:
-            "Review saved for this browser session. " +
-            "Resume it from Transfer & Pay.",
+            draft.transferType === "ecommerce"
+              ? "Review saved. Resume it from Transfer & Pay."
+              : "Review saved for this browser session. Resume it from Transfer & Pay.",
         });
-      } catch {
+      } catch (error) {
         setSaveMessage({
           type: "error",
           text: "We could not save your review. Please try again.",
         });
+
+        setActionError(error.message || "");
       } finally {
         savingRef.current = false;
+        actionPending.current = false;
+
+        setBusy(false);
         setSaving(false);
       }
     }, 400);
   }
 
-  function finishReview() {
+  async function finishReview() {
+    if (actionPending.current) return;
+
+    actionPending.current = true;
+    setBusy(true);
+    setActionError("");
+
     try {
       const current = getRiskAssessment();
 
+      // Preserve existing transaction risk checks.
       if (
         current?.canProceedToConfirmation !== true ||
         (
@@ -233,30 +296,75 @@ export default function PaymentReview({ assessment }) {
         );
       }
 
+      // Ensure all required questions are answered.
+      if (unansweredQuestions(answers).length > 0) {
+        throw new Error(
+          "Answer all visible questions before continuing."
+        );
+      }
+
+      // Preserve existing payment restrictions.
+      if (restriction) {
+        throw new Error(restriction);
+      }
+
+      if (draft.transferType === "ecommerce") {
+        // Record explicit acknowledgement.
+        await reviewAction("ack", draft);
+
+        // Complete the guided payment review in Supabase.
+        await reviewAction("complete", draft, answers);
+      }
+
+      // Preserve existing browser-session completion.
       completeReview(draft, answers);
+
       navigate("/transfer/confirmation");
     } catch (err) {
-      setActionError(err.message);
+      setActionError(
+        err.message || "Unable to complete the payment review."
+      );
+    } finally {
+      actionPending.current = false;
+      setBusy(false);
     }
   }
 
   async function confirmCancellation() {
-    if (cancelPending.current) return;
+    if (cancelPending.current || actionPending.current) {
+      return;
+    }
 
     cancelPending.current = true;
+    actionPending.current = true;
+
+    setBusy(true);
     setActionError("");
 
     try {
+      // Persist cancellation in Supabase BEFORE clearing
+      // the browser-session payment draft.
+      if (draft.transferType === "ecommerce") {
+        await reviewAction("cancel", draft);
+      }
+
+      // Preserve existing cancellation functionality.
       await cancelPayment(draft);
 
       navigate("/transfer", {
         replace: true,
         state: { cancelled: true },
       });
-    } catch {
-      setActionError("Cancellation failed. Please try again.");
+    } catch (error) {
+      setActionError(
+        error.message ||
+          "Cancellation failed. Please try again."
+      );
     } finally {
       cancelPending.current = false;
+      actionPending.current = false;
+
+      setBusy(false);
     }
   }
 
@@ -290,8 +398,13 @@ export default function PaymentReview({ assessment }) {
     : 0;
 
   function nextQuestion() {
+    if (actionPending.current) return;
+
     if (!currentQuestion || !answers[currentQuestion.id]) {
-      setMissing(currentQuestion ? [currentQuestion.id] : []);
+      setMissing(
+        currentQuestion ? [currentQuestion.id] : []
+      );
+
       return;
     }
 
@@ -315,10 +428,12 @@ export default function PaymentReview({ assessment }) {
   return (
     <main className="flow-page">
       <div className="flow-shell flow-narrow">
+
         {/* Back navigation */}
         <button
           type="button"
           className="flow-back flow-back-button"
+          disabled={busy}
           onClick={() => navigate("/transfer/ecommerce")}
         >
           <ArrowLeft size={19} />
@@ -367,8 +482,12 @@ export default function PaymentReview({ assessment }) {
         {/* Page heading */}
         <div className="flow-page-heading">
           <div>
-            <span className="flow-eyebrow">PAYMENT SAFETY</span>
+            <span className="flow-eyebrow">
+              PAYMENT SAFETY
+            </span>
+
             <h1>Review your payment</h1>
+
             <p>
               A few quick checks before you decide whether to proceed.
             </p>
@@ -379,7 +498,10 @@ export default function PaymentReview({ assessment }) {
         <section className="flow-panel flow-summary-card">
           <div className="flow-section-title">
             <h2>Payment Summary</h2>
-            <span className="flow-tag">Read-only</span>
+
+            <span className="flow-tag">
+              Read-only
+            </span>
           </div>
 
           <p className="flow-payment-amount">
@@ -394,7 +516,9 @@ export default function PaymentReview({ assessment }) {
 
             <div className="flow-detail-row">
               <dt>Recipient identifier</dt>
-              <dd>{maskIdentifier(draft.recipientNumber)}</dd>
+              <dd>
+                {maskIdentifier(draft.recipientNumber)}
+              </dd>
             </div>
 
             <div className="flow-detail-row">
@@ -414,7 +538,10 @@ export default function PaymentReview({ assessment }) {
         >
           <div className="flow-section-title">
             <div>
-              <span className="flow-eyebrow">GUIDED CHECK</span>
+              <span className="flow-eyebrow">
+                GUIDED CHECK
+              </span>
+
               <h2 id="guided-check-title">
                 Let's check this payment
               </h2>
@@ -435,7 +562,9 @@ export default function PaymentReview({ assessment }) {
                   Question {safeIndex + 1} of {visible.length}
                 </span>
 
-                <span>{answeredCount} answered</span>
+                <span>
+                  {answeredCount} answered
+                </span>
               </div>
 
               <div
@@ -447,7 +576,9 @@ export default function PaymentReview({ assessment }) {
                 aria-valuemax={visible.length}
               >
                 <div
-                  style={{ width: `${progressPercent}%` }}
+                  style={{
+                    width: `${progressPercent}%`,
+                  }}
                 />
               </div>
 
@@ -457,7 +588,9 @@ export default function PaymentReview({ assessment }) {
                 id={`question-${currentQuestion.id}`}
                 className="guided-check__question"
               >
-                <legend>{currentQuestion.label}</legend>
+                <legend>
+                  {currentQuestion.label}
+                </legend>
 
                 {currentQuestion.description && (
                   <p className="guided-check__hint">
@@ -479,11 +612,15 @@ export default function PaymentReview({ assessment }) {
                         type="radio"
                         name={currentQuestion.id}
                         value={value}
+                        disabled={busy}
                         checked={
                           answers[currentQuestion.id] === value
                         }
                         onChange={() =>
-                          answerQuestion(currentQuestion.id, value)
+                          answerQuestion(
+                            currentQuestion.id,
+                            value
+                          )
                         }
                       />
 
@@ -507,7 +644,7 @@ export default function PaymentReview({ assessment }) {
                 <button
                   type="button"
                   className="flow-button flow-button-secondary"
-                  disabled={safeIndex === 0}
+                  disabled={busy || safeIndex === 0}
                   onClick={() => {
                     setQuestionIndex(safeIndex - 1);
                     setMissing([]);
@@ -520,7 +657,9 @@ export default function PaymentReview({ assessment }) {
                 <button
                   type="button"
                   className="flow-button flow-button-primary"
-                  disabled={!answers[currentQuestion.id]}
+                  disabled={
+                    busy || !answers[currentQuestion.id]
+                  }
                   onClick={nextQuestion}
                 >
                   {safeIndex === visible.length - 1
@@ -551,6 +690,7 @@ export default function PaymentReview({ assessment }) {
               <button
                 type="button"
                 className="flow-button flow-button-secondary"
+                disabled={busy}
                 onClick={() => {
                   setShowSummary(false);
                   setQuestionIndex(0);
@@ -585,7 +725,10 @@ export default function PaymentReview({ assessment }) {
                 }}
               >
                 <div className="risk-results__circle-inner">
-                  <strong>{riskScore.percentage}%</strong>
+                  <strong>
+                    {riskScore.percentage}%
+                  </strong>
+
                   <span>Risk indicator</span>
                 </div>
               </div>
@@ -611,7 +754,9 @@ export default function PaymentReview({ assessment }) {
                   </div>
                 ))
               ) : (
-                <p>No specific warning signs were identified.</p>
+                <p>
+                  No specific warning signs were identified.
+                </p>
               )}
             </div>
 
@@ -636,6 +781,7 @@ export default function PaymentReview({ assessment }) {
                 "risk-results__continue"
               }
               disabled={
+                busy ||
                 Boolean(restriction) ||
                 assessment?.canProceedToConfirmation !== true
               }
@@ -648,8 +794,10 @@ export default function PaymentReview({ assessment }) {
         )}
 
         {/* Existing payment restrictions */}
-        {(restriction ||
-          assessment?.canProceedToConfirmation !== true) && (
+        {(
+          restriction ||
+          assessment?.canProceedToConfirmation !== true
+        ) && (
           <p className="flow-panel" role="status">
             {restriction ||
               assessment?.restrictionReason ||
@@ -685,6 +833,7 @@ export default function PaymentReview({ assessment }) {
 
             <span className="flow-review-actions__summary-copy">
               <strong>Need more time?</strong>
+
               <small>
                 Save this review or make changes to your payment.
               </small>
@@ -698,12 +847,15 @@ export default function PaymentReview({ assessment }) {
           </summary>
 
           <div className="flow-review-actions__body">
+
             {/* Save and Edit */}
             <div className="flow-review-actions__buttons">
               <button
                 type="button"
                 className="flow-review-actions__save"
-                disabled={saving || confirmCancel}
+                disabled={
+                  busy || saving || confirmCancel
+                }
                 onClick={saveForLater}
               >
                 <BookmarkCheck
@@ -719,7 +871,9 @@ export default function PaymentReview({ assessment }) {
               <button
                 type="button"
                 className="flow-review-actions__edit"
-                disabled={saving || confirmCancel}
+                disabled={
+                  busy || saving || confirmCancel
+                }
                 onClick={() =>
                   navigate("/transfer/ecommerce")
                 }
@@ -728,6 +882,7 @@ export default function PaymentReview({ assessment }) {
                   size={19}
                   aria-hidden="true"
                 />
+
                 Edit details
               </button>
             </div>
@@ -749,6 +904,7 @@ export default function PaymentReview({ assessment }) {
                     <button
                       type="button"
                       className="flow-review-actions__keep"
+                      disabled={busy}
                       onClick={() => {
                         setConfirmCancel(false);
                         setActionError("");
@@ -760,6 +916,7 @@ export default function PaymentReview({ assessment }) {
                     <button
                       type="button"
                       className="flow-review-actions__confirm-cancel"
+                      disabled={busy}
                       onClick={confirmCancellation}
                     >
                       Yes, cancel payment
@@ -770,10 +927,11 @@ export default function PaymentReview({ assessment }) {
                 <button
                   type="button"
                   className="flow-review-actions__cancel"
-                  disabled={saving}
+                  disabled={busy || saving}
                   onClick={() => setConfirmCancel(true)}
                 >
                   <X size={17} aria-hidden="true" />
+
                   Cancel payment
                 </button>
               )}
@@ -782,9 +940,7 @@ export default function PaymentReview({ assessment }) {
             {/* Save result */}
             {saveMessage && (
               <div
-                className={
-                  `flow-feedback ${saveMessage.type}`
-                }
+                className={`flow-feedback ${saveMessage.type}`}
                 role="status"
               >
                 {saveMessage.type === "success" ? (
@@ -803,6 +959,7 @@ export default function PaymentReview({ assessment }) {
                 to="/transfer"
               >
                 Return to Transfer & Pay
+
                 <ArrowRight
                   size={17}
                   aria-hidden="true"
