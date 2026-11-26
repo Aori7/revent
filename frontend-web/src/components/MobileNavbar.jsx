@@ -32,7 +32,7 @@ function MobileNavbar() {
 
       {/* Home */}
       <NavLink to="/" end>
-        <House size={26} />
+        <House size={26} className="nav-home-icon" />
         <span>Home</span>
       </NavLink>
 
@@ -50,7 +50,7 @@ function MobileNavbar() {
       {/* Raised Transfer button */}
       <NavLink to="/transfer" className="mobile-nav-transfer">
         <div className="mobile-transfer-circle">
-          <ArrowLeftRight size={29} />
+          <ArrowLeftRight size={29} className="nav-transfer-icon" />
         </div>
 
         <span>Transfer</span>
@@ -58,13 +58,13 @@ function MobileNavbar() {
 
       {/* Rewards */}
       <NavLink to="/rewards">
-        <Gift size={26} />
+        <Gift size={26} className="nav-rewards-icon" />
         <span>Rewards</span>
       </NavLink>
 
       {/* More */}
       <NavLink to="/more">
-        <Menu size={26} />
+        <Menu size={26} className="nav-more-icon" />
         <span>More</span>
       </NavLink>
     </nav>

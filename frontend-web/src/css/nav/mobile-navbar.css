@@ -170,3 +170,152 @@
         );
     }
 }
+
+/* Home bounce */
+/* nav animations */
+@keyframes nav-home-bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    30% {
+        transform: translateY(-6px);
+    }
+
+    60% {
+        transform: translateY(2px);
+    }
+
+    80% {
+        transform: translateY(-2px);
+    }
+}
+
+/* Riri head tilt */
+
+@keyframes nav-riri-tilt {
+    0%, 100% {
+        transform: rotate(0) scale(1.12);
+    }
+
+    30% {
+        transform: rotate(-12deg) scale(1.15);
+    }
+
+    65% {
+        transform: rotate(10deg) scale(1.15);
+    }
+}
+
+/* Transfer arrows */
+
+@keyframes nav-arrow-right {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(4px);
+    }
+}
+
+@keyframes nav-arrow-left {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(-4px);
+    }
+}
+
+/* Rewards wiggle */
+
+@keyframes nav-rewards-wiggle {
+    0%, 100% {
+        transform: rotate(0);
+    }
+
+    25% {
+        transform: rotate(-12deg);
+    }
+
+    50% {
+        transform: rotate(12deg);
+    }
+
+    75% {
+        transform: rotate(-6deg);
+    }
+}
+
+/* More menu */
+
+@keyframes nav-menu-slide {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(4px);
+    }
+}
+
+/* Play when selected */
+
+.mobile-bottom-nav a.active .nav-home-icon {
+    animation: nav-home-bounce 0.5s ease;
+}
+
+.mobile-bottom-nav a.active .mobile-nav-riri {
+    animation: nav-riri-tilt 0.6s ease;
+}
+
+.mobile-bottom-nav a.active .nav-transfer-icon path:nth-child(odd) {
+    animation: nav-arrow-right 0.5s ease;
+}
+
+.mobile-bottom-nav a.active .nav-transfer-icon path:nth-child(even) {
+    animation: nav-arrow-left 0.5s ease;
+}
+
+.mobile-bottom-nav a.active .nav-rewards-icon {
+    animation: nav-rewards-wiggle 0.5s ease;
+}
+
+.mobile-bottom-nav a.active .nav-more-icon {
+    animation: nav-menu-slide 0.4s ease;
+}
+
+/* Hover animations for mouse users */
+
+@media (hover: hover) and (pointer: fine) {
+
+    .mobile-bottom-nav a:hover .nav-home-icon {
+        animation: nav-home-bounce 0.5s ease;
+    }
+
+    .mobile-bottom-nav a:hover .mobile-nav-riri {
+        animation: nav-riri-tilt 0.6s ease;
+    }
+
+    .mobile-bottom-nav a:hover .nav-rewards-icon {
+        animation: nav-rewards-wiggle 0.5s ease;
+    }
+
+    .mobile-bottom-nav a:hover .nav-more-icon {
+        animation: nav-menu-slide 0.4s ease;
+    }
+}
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .mobile-bottom-nav *,
+    .mobile-bottom-nav *::before,
+    .mobile-bottom-nav *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
