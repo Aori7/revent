@@ -9,6 +9,7 @@ import {
   cleanAnswers,
   defaultAnswers,
   unansweredQuestions,
+  getReviewContext,
 } from "./banking.js";
 
 import { getRiskAssessment } from "./riskSession.js";
@@ -33,15 +34,24 @@ function currentUserId() {
 
 function signedIn() {
   return Boolean(
-    sessionStorage.getItem("reventAccessToken") && currentUserId(),
+    sessionStorage.getItem("reventAccessToken") &&
+    currentUserId()
   );
 }
 
 function owned(record) {
-  return signedIn() && record?.customerId === currentUserId();
+  return (
+    signedIn() &&
+    record?.customerId === currentUserId()
+  );
 }
 
 export function validPayment(draft) {
+  const maximumAmount =
+    draft?.transferType === "ecommerce"
+      ? 1000000
+      : demoAccount.balance;
+
   return (
     typeof draft?.recipientName === "string" &&
     Boolean(draft.recipientName.trim()) &&
@@ -50,14 +60,19 @@ export function validPayment(draft) {
     ) &&
     /^\d+(\.\d{1,2})?$/.test(String(draft.amount)) &&
     Number(draft.amount) > 0 &&
-    Number(draft.amount) <= demoAccount.balance
+    Number(draft.amount) <= maximumAmount
   );
 }
 
 export function activeDraft() {
   const draft = readJson(DRAFT);
 
-  if (!owned(draft) || !draft.id || !draft.version || !validPayment(draft)) {
+  if (
+    !owned(draft) ||
+    !draft.id ||
+    !draft.version ||
+    !validPayment(draft)
+  ) {
     return null;
   }
 
@@ -67,12 +82,15 @@ export function activeDraft() {
 export function readDraft() {
   const draft = readJson(DRAFT);
 
-  // The original simulator saved drafts without an ID or customer ID.
-  // Their details can still be opened in the transfer form.
-  const isLegacyDraft = draft && !draft.customerId && !draft.id;
+  // Retain support for legacy simulator drafts.
+  const isLegacyDraft =
+    draft && !draft.customerId && !draft.id;
 
   if (owned(draft) || isLegacyDraft) {
-    return { ...startingPayment, ...draft };
+    return {
+      ...startingPayment,
+      ...draft,
+    };
   }
 
   return { ...startingPayment };
@@ -90,7 +108,9 @@ function matches(record, draft) {
 
 function requireActive(draft) {
   if (!owned(draft)) {
-    throw new Error("You do not have access to this payment.");
+    throw new Error(
+      "You do not have access to this payment."
+    );
   }
 
   const record = {
@@ -100,11 +120,13 @@ function requireActive(draft) {
 
   if (!matches(record, activeDraft())) {
     throw new Error(
-      "This payment has changed or is no longer available. Return to Transfer & Pay.",
+      "This payment has changed or is no longer available. Return to Transfer & Pay."
     );
   }
 }
 
+// Clear the active questionnaire and completed review.
+// Previously saved reviews are not deleted.
 export function invalidateReview() {
   sessionStorage.removeItem(COMPLETED);
   sessionStorage.removeItem(REVIEW);
@@ -117,19 +139,50 @@ export function saveDraft(form) {
 
   const old = activeDraft();
 
-  const changed =
-    !old || draftSignature(old) !== draftSignature(form);
+  // Every e-commerce payment submission must start
+  // with a fresh questionnaire, even if the recipient,
+  // amount and reference remain unchanged.
+  const freshReview =
+    form.transferType === "ecommerce";
 
-  if (changed) invalidateReview();
+  const changed =
+    freshReview ||
+    !old ||
+    draftSignature(old) !== draftSignature(form);
+
+  if (changed) {
+    invalidateReview();
+  }
+
+  // Reset the old risk assessment and acknowledgement
+  // for a newly submitted e-commerce review.
+  if (freshReview) {
+    sessionStorage.removeItem(
+      "revent.demo.transactionRisk"
+    );
+
+    sessionStorage.removeItem(
+      "revent.firstRecipientAcknowledgement"
+    );
+  }
 
   const draft = {
     ...form,
+
     customerId: currentUserId(),
+
     id: old?.id || crypto.randomUUID(),
-    version: (old?.version || 0) + Number(changed),
+
+    // A new version ensures the backend also resets
+    // the previous review and questionnaire answers.
+    version:
+      (old?.version || 0) + Number(changed),
   };
 
-  sessionStorage.setItem(DRAFT, JSON.stringify(draft));
+  sessionStorage.setItem(
+    DRAFT,
+    JSON.stringify(draft)
+  );
 
   return draft;
 }
@@ -137,11 +190,20 @@ export function saveDraft(form) {
 export function readAnswers(draft) {
   const previous = readJson(REVIEW);
 
-  if (owned(draft) && matches(previous, draft)) {
+  // Restore answers only when they belong to
+  // the current payment ID and version.
+  if (
+    owned(draft) &&
+    matches(previous, draft)
+  ) {
     return cleanAnswers(previous.answers);
   }
 
-  return { ...defaultAnswers };
+  // Fresh questionnaire with no selected category.
+  return {
+    ...defaultAnswers,
+    purpose: "",
+  };
 }
 
 function reviewRecord(draft, answers) {
@@ -152,6 +214,8 @@ function reviewRecord(draft, answers) {
     id: draft.id,
     version: draft.version,
     signature: draftSignature(draft),
+
+    // Preserve relevant personalised answers.
     answers: cleanAnswers(answers),
   };
 }
@@ -160,28 +224,54 @@ export function saveAnswers(draft, answers) {
   const record = reviewRecord(draft, answers);
 
   sessionStorage.removeItem(COMPLETED);
-  sessionStorage.setItem(REVIEW, JSON.stringify(record));
+
+  sessionStorage.setItem(
+    REVIEW,
+    JSON.stringify(record)
+  );
 }
 
-export function saveReviewForLater(customerId, draft, answers) {
-  // Compare with the current user's ID, not the function reference.
-  if (!signedIn() || customerId !== currentUserId()) {
+export function saveReviewForLater(
+  customerId,
+  draft,
+  answers
+) {
+  if (
+    !signedIn() ||
+    customerId !== currentUserId()
+  ) {
     throw new Error("Access denied.");
   }
 
+  const context = getReviewContext(
+    draft,
+    getRiskAssessment()
+  );
+
   const record = {
     ...reviewRecord(draft, answers),
+
     draft,
-    unresolvedQuestions: unansweredQuestions(answers),
+
+    unresolvedQuestions: unansweredQuestions(
+      answers,
+      context
+    ),
+
     savedAt: new Date().toISOString(),
   };
 
-  sessionStorage.setItem(SAVED, JSON.stringify(record));
+  sessionStorage.setItem(
+    SAVED,
+    JSON.stringify(record)
+  );
 
   return record;
 }
 
-export function getSavedReview(customerId = currentUserId()) {
+export function getSavedReview(
+  customerId = currentUserId()
+) {
   const saved = readJson(SAVED);
 
   if (
@@ -206,27 +296,46 @@ export function setRestriction(value) {
     sessionStorage.removeItem(RESTRICTION);
   }
 
-  window.dispatchEvent(new Event("payment-restriction"));
+  window.dispatchEvent(
+    new Event("payment-restriction")
+  );
 }
 
 export function completeReview(draft, answers) {
   const record = reviewRecord(draft, answers);
 
-  if (unansweredQuestions(record.answers).length > 0) {
-    throw new Error("Answer all visible questions.");
+  const context = getReviewContext(
+    draft,
+    getRiskAssessment()
+  );
+
+  // Validate all relevant questionnaire answers.
+  if (
+    unansweredQuestions(
+      record.answers,
+      context
+    ).length > 0
+  ) {
+    throw new Error(
+      "Answer all visible questions."
+    );
   }
 
+  // Preserve existing payment restrictions.
   const restriction = readRestriction();
 
   if (restriction) {
     throw new Error(restriction);
   }
 
-  sessionStorage.setItem(COMPLETED, JSON.stringify(record));
+  sessionStorage.setItem(
+    COMPLETED,
+    JSON.stringify(record)
+  );
 }
 
-// Restore the server's original review ID and version,
-// rather than creating a new draft.
+// Only explicitly resumed reviews restore
+// their original payment details and answers.
 export function restoreSavedPaymentReview(saved) {
   const draft = saved?.draft;
 
@@ -237,20 +346,44 @@ export function restoreSavedPaymentReview(saved) {
     draft.version < 1 ||
     !validPayment(draft)
   ) {
-    throw new Error("The saved payment review is no longer available.");
+    throw new Error(
+      "The saved payment review is no longer available."
+    );
   }
 
   invalidateReview();
 
-  sessionStorage.setItem(DRAFT, JSON.stringify(draft));
+  // Clear the previous active payment's risk assessment.
+  // The resumed payment will be assessed again.
+  sessionStorage.removeItem(
+    "revent.demo.transactionRisk"
+  );
 
-  saveAnswers(draft, saved.answers || {});
+  sessionStorage.removeItem(
+    "revent.firstRecipientAcknowledgement"
+  );
+
+  // Retain the original saved review ID and version.
+  sessionStorage.setItem(
+    DRAFT,
+    JSON.stringify(draft)
+  );
+
+  // Restore the previously selected category
+  // and relevant questionnaire answers.
+  saveAnswers(
+    draft,
+    saved.answers || {}
+  );
 
   return draft;
 }
 
 export function hasCompletedReview(draft) {
-  return matches(readJson(COMPLETED), draft);
+  return matches(
+    readJson(COMPLETED),
+    draft
+  );
 }
 
 export function canConfirm() {
@@ -260,7 +393,10 @@ export function canConfirm() {
     return false;
   }
 
-  const completedReview = matches(readJson(COMPLETED), draft);
+  const completedReview = matches(
+    readJson(COMPLETED),
+    draft
+  );
 
   if (completedReview) {
     return true;
@@ -271,17 +407,51 @@ export function canConfirm() {
   return risk?.level === "low";
 }
 
-// Shared cancellation service for the browser-session simulator.
+// Existing cancellation functionality.
 export async function cancelPayment(draft) {
   requireActive(draft);
 
-  const saved = getSavedReview(draft.customerId);
+  const saved = getSavedReview(
+    draft.customerId
+  );
 
-  if (saved && (!saved.draft.id || saved.draft.id === draft.id)) {
+  if (
+    saved &&
+    (
+      !saved.draft.id ||
+      saved.draft.id === draft.id
+    )
+  ) {
     sessionStorage.removeItem(SAVED);
   }
 
   invalidateReview();
 
   sessionStorage.removeItem(DRAFT);
+}
+
+// Clear a successfully completed e-commerce payment.
+export function finishPayment(draft) {
+  requireActive(draft);
+
+  const saved = getSavedReview(
+    draft.customerId
+  );
+
+  // Preserve unrelated saved payment reviews.
+  if (saved?.draft?.id === draft.id) {
+    sessionStorage.removeItem(SAVED);
+  }
+
+  invalidateReview();
+
+  sessionStorage.removeItem(DRAFT);
+
+  sessionStorage.removeItem(
+    "revent.demo.transactionRisk"
+  );
+
+  sessionStorage.removeItem(
+    "revent.firstRecipientAcknowledgement"
+  );
 }

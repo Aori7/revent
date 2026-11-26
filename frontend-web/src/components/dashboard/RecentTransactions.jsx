@@ -1,24 +1,19 @@
-import { useSyncExternalStore } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+
 import TransactionItem from "./TransactionItem";
 
-import {
-  getTransactions,
-  subscribeToTransactions,
-} from "../../utils/transactionHistory";
+import useBankingTransactions from "../../hooks/useBankingTransactions";
 
 import "../../css/recent-transactions.css";
 
 function RecentTransactions() {
-  const version = useSyncExternalStore(
-    subscribeToTransactions,
-    () => localStorage.getItem("reventTransactionHistory"),
-    () => null
-  );
-
-  // Recalculate when the shared transaction store changes.
-  const transactions = getTransactions();
+  const {
+    transactions,
+    loading,
+    error,
+    retry,
+  } = useBankingTransactions();
 
   return (
     <section className="recent-transactions">
@@ -33,7 +28,33 @@ function RecentTransactions() {
         </Link>
       </div>
 
-      <div className="transactions-list">
+      <div
+        className="transactions-list"
+        aria-busy={loading}
+      >
+        {loading && (
+          <p role="status">
+            Loading recent transactions...
+          </p>
+        )}
+
+        {error && (
+          <div role="alert">
+            <p>
+              Unable to retrieve the latest
+              transactions from the database.
+            </p>
+
+            <button
+              type="button"
+              className="flow-button flow-button-secondary"
+              onClick={retry}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {transactions.slice(0, 5).map((transaction) => (
           <TransactionItem
             key={transaction.id}
@@ -41,9 +62,11 @@ function RecentTransactions() {
           />
         ))}
 
-        {transactions.length === 0 && (
-          <p>No recent transactions to display.</p>
-        )}
+        {!loading &&
+          !error &&
+          transactions.length === 0 && (
+            <p>No recent transactions to display.</p>
+          )}
       </div>
     </section>
   );

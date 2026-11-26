@@ -7,7 +7,10 @@ function normalise(value) {
   return String(value ?? "").replace(/[\s-]/g, "");
 }
 
-export function hasCompletedOutgoingPayment(transaction, history) {
+export function hasCompletedOutgoingPayment(
+  transaction,
+  history
+) {
   return history.some(
     (item) =>
       item.customerId === transaction.customerId &&
@@ -18,40 +21,67 @@ export function hasCompletedOutgoingPayment(transaction, history) {
   );
 }
 
-export function assessTransactionRisk(transaction, context = {}) {
+export function assessTransactionRisk(
+  transaction,
+  context = {}
+) {
   const amount = Number(transaction.amount);
 
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error("Enter a valid payment amount.");
   }
 
-  let isNewRecipient = context.isNewRecipient === true;
+  let isNewRecipient =
+    context.isNewRecipient === true;
+
   let restriction = "";
 
-  // Payment drafts use transaction history rather than form assumptions.
-  // Standalone simulator tests can still provide isNewRecipient.
-  if (transaction.customerId) {
-    const raw = localStorage.getItem("reventTransactionHistory");
-    const saved = raw ? JSON.parse(raw) : [];
+  const hasServerHistory =
+    typeof context.serverIsNewRecipient === "boolean";
 
-    if (
-      !Array.isArray(saved) ||
-      saved.some((item) => !item || typeof item !== "object")
-    ) {
-      throw new Error("Payment history is unavailable. Please try again.");
-    }
-
-    isNewRecipient = !hasCompletedOutgoingPayment(transaction, [
-      ...saved,
-      ...demoTransactions,
-    ]);
-
-    restriction =
-      sessionStorage.getItem("revent.demo.paymentRestriction") || "";
+  // PBI-34: Prioritise actual Supabase history.
+  if (hasServerHistory) {
+    isNewRecipient = context.serverIsNewRecipient;
   }
 
+  if (transaction.customerId) {
+    // Preserve local simulation behaviour for existing
+    // payment forms before backend assessment.
+    if (!hasServerHistory) {
+      const raw = localStorage.getItem(
+        "reventTransactionHistory"
+      );
+
+      const saved = raw ? JSON.parse(raw) : [];
+
+      if (
+        !Array.isArray(saved) ||
+        saved.some(
+          (item) => !item || typeof item !== "object"
+        )
+      ) {
+        throw new Error(
+          "Payment history is unavailable. Please try again."
+        );
+      }
+
+      isNewRecipient =
+        !hasCompletedOutgoingPayment(transaction, [
+          ...saved,
+          ...demoTransactions,
+        ]);
+    }
+
+    restriction =
+      sessionStorage.getItem(
+        "revent.demo.paymentRestriction"
+      ) || "";
+  }
+
+  // PBI-34: Exact first-time recipient condition.
   const firstTimeRecipient =
-    isNewRecipient && amount >= FIRST_RECIPIENT_THRESHOLD;
+    isNewRecipient &&
+    amount >= FIRST_RECIPIENT_THRESHOLD;
 
   let score = 0;
   const reasons = [];
@@ -63,19 +93,27 @@ export function assessTransactionRisk(transaction, context = {}) {
     }
   }
 
-  addRisk(isNewRecipient, 20, "Payment to a new recipient");
+  addRisk(
+    isNewRecipient,
+    20,
+    "Payment to a new recipient"
+  );
 
-  // Ensures the existing medium/high routing opens the review.
   addRisk(
     firstTimeRecipient,
     10,
     `First payment to this recipient of SGD ${FIRST_RECIPIENT_THRESHOLD} or more`
   );
 
-  addRisk(amount > 1000, 20, "Large transaction amount");
+  addRisk(
+    amount > 1000,
+    20,
+    "Large transaction amount"
+  );
 
   addRisk(
-    context.hasScamReports === true || context.reportedRecipient === true,
+    context.hasScamReports === true ||
+      context.reportedRecipient === true,
     40,
     "Recipient has reported scam activity"
   );
@@ -98,38 +136,58 @@ export function assessTransactionRisk(transaction, context = {}) {
     "Multiple transfers in a short period"
   );
 
-  // The existing on-call interruption remains in PaymentConfirmation.
+  // Existing on-call interruption remains
+  // in PaymentConfirmation.jsx.
   score = Math.min(score, 100);
 
-  const level = score >= 60 ? "high" : score >= 30 ? "medium" : "low";
+  const level =
+    score >= 60
+      ? "high"
+      : score >= 30
+        ? "medium"
+        : "low";
 
   return {
     assessmentVersion: ASSESSMENT_VERSION,
+
     score,
     level,
     reasons,
 
-    // Preserve the existing field used elsewhere.
-    requiresSafetyReview: level === "high",
+    requiresSafetyReview:
+      level === "high",
 
-    requiresReview: level !== "low",
+    requiresReview:
+      level !== "low",
 
     conditions: {
       firstTimeRecipient,
     },
 
     canProceedToConfirmation:
-      !restriction && context.canProceedToConfirmation !== false,
+      !restriction &&
+      context.canProceedToConfirmation !== false,
 
     restrictionReason:
       restriction ||
-      (context.canProceedToConfirmation === false
-        ? "This payment cannot proceed yet."
-        : ""),
+      (
+        context.canProceedToConfirmation === false
+          ? "This payment cannot proceed yet."
+          : ""
+      ),
 
-    // Retain recipient-specific signals during reassessment.
+    // Retain recipient-specific signals
+    // during later reassessment.
     recipientContext: {
-      reportedRecipient: context.reportedRecipient === true,
+      reportedRecipient:
+        context.reportedRecipient === true,
+
+      ...(hasServerHistory
+        ? {
+            serverIsNewRecipient:
+              context.serverIsNewRecipient,
+          }
+        : {}),
     },
   };
 }

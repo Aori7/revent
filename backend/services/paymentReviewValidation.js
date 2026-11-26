@@ -1,22 +1,71 @@
-
 "use strict";
 
+const yesNoUnsure = [
+  "yes",
+  "no",
+  "unsure",
+];
+
+// Retain previous fields for compatibility.
 const allowedAnswers = {
-  extraFee: ["yes", "no", "unsure"],
-  disclosed: ["yes", "no", "unsure"],
-  source: ["retailer", "marketplace", "social", "unknown"],
-  identity: ["yes", "no", "unsure"],
-  urgency: ["yes", "no", "unsure"],
-  reviews: ["yes", "no", "unsure"],
+  purpose: [
+    "shopping",
+    "personal",
+    "bills",
+    "investment",
+    "job",
+    "general",
+  ],
+
+  extraFee: yesNoUnsure,
+  disclosed: yesNoUnsure,
+
+  source: [
+    "retailer",
+    "marketplace",
+    "social",
+    "unknown",
+  ],
+
+  identity: yesNoUnsure,
+  urgency: yesNoUnsure,
+  reviews: yesNoUnsure,
   secrecy: ["yes", "no"],
+
+  newContact: yesNoUnsure,
+  unexpectedRequest: yesNoUnsure,
+  guaranteedReturns: yesNoUnsure,
+  upfrontFee: yesNoUnsure,
+  purposeKnown: yesNoUnsure,
+
+  recipientSource: [
+    "known",
+    "official",
+    "message",
+    "unknown",
+  ],
+
+  amountConfirmed: yesNoUnsure,
+};
+
+const categoryQuestions = {
+  shopping: "disclosed",
+  personal: "newContact",
+  bills: "unexpectedRequest",
+  investment: "guaranteedReturns",
+  job: "upfrontFee",
+  general: "purposeKnown",
 };
 
 function invalid(message) {
   const error = new Error(message);
+
   error.status = 400;
+
   throw error;
 }
 
+// Preserve existing payment validation.
 function paymentFromDraft(draft) {
   if (
     !draft ||
@@ -39,7 +88,11 @@ function paymentFromDraft(draft) {
   ).replace(/[\s-]/g, "");
 
   const reference = draft.reference ?? "";
-  const amountText = String(draft.amount ?? "");
+
+  const amountText = String(
+    draft.amount ?? ""
+  );
+
   const amount = Number(amountText);
 
   if (
@@ -61,37 +114,57 @@ function paymentFromDraft(draft) {
 
   return {
     transferType: "ecommerce",
-    recipientName: recipientName.trim(),
+
+    recipientName:
+      recipientName.trim(),
+
     recipientNumber,
-    amount: amount.toFixed(2),
-    reference: reference.trim(),
+
+    amount:
+      amount.toFixed(2),
+
+    reference:
+      reference.trim(),
   };
 }
 
-// Match existing frontend conditional question logic.
-function visibleAnswerIds(answers) {
+// Match the shortened frontend questionnaire.
+function visibleAnswerIds(
+  answers = {},
+  context = {}
+) {
+  if (
+    !allowedAnswers.purpose.includes(
+      answers.purpose
+    )
+  ) {
+    return ["purpose"];
+  }
+
   return [
-    "extraFee",
+    "purpose",
 
-    ...(answers.extraFee === "yes"
-      ? ["disclosed"]
-      : []),
+    // One category-specific question
+    categoryQuestions[answers.purpose],
 
-    "source",
+    // Common recipient verification
     "identity",
+
+    // Additional question only for large payments
+    ...(context.largeAmount
+      ? ["amountConfirmed"]
+      : []),
+
+    // Combined pressure and secrecy check
     "urgency",
-
-    ...(["social", "unknown"].includes(answers.source)
-      ? ["reviews"]
-      : []),
-
-    ...(answers.urgency === "yes"
-      ? ["secrecy"]
-      : []),
   ];
 }
 
-function validatedAnswers(input, requireAll) {
+function validatedAnswers(
+  input,
+  requireAll,
+  context = {}
+) {
   if (
     !input ||
     typeof input !== "object" ||
@@ -102,42 +175,117 @@ function validatedAnswers(input, requireAll) {
 
   const answers = {};
 
-  // Validate only the recognised questionnaire fields.
-  for (const [key, allowed] of Object.entries(allowedAnswers)) {
+  // Validate every recognised answer.
+  for (
+    const [key, allowed]
+    of Object.entries(allowedAnswers)
+  ) {
     const value = input[key] ?? "";
 
     if (
       typeof value !== "string" ||
-      (value !== "" && !allowed.includes(value))
+      (
+        value !== "" &&
+        !allowed.includes(value)
+      )
     ) {
-      invalid(`Invalid answer for ${key}.`);
+      invalid(
+        `Invalid answer for ${key}.`
+      );
     }
 
     answers[key] = value;
   }
 
-  const visible = new Set(visibleAnswerIds(answers));
+  const required = visibleAnswerIds(
+    answers,
+    context
+  );
 
-  // Hidden conditional questions must not retain old answers.
+  const visible = new Set(required);
+
+  // Preserve older saved Sprint 1 answers until
+  // a payment purpose has been selected.
+  if (
+    !requireAll &&
+    !answers.purpose
+  ) {
+    visible.add("extraFee");
+    visible.add("source");
+    visible.add("identity");
+    visible.add("urgency");
+
+    if (answers.extraFee === "yes") {
+      visible.add("disclosed");
+    }
+
+    if (
+      ["social", "unknown"].includes(
+        answers.source
+      )
+    ) {
+      visible.add("reviews");
+    }
+
+    if (answers.urgency === "yes") {
+      visible.add("secrecy");
+    }
+  }
+
+  // Clear hidden and irrelevant answers.
   for (const key of Object.keys(answers)) {
     if (!visible.has(key)) {
       answers[key] = "";
     }
   }
 
-  // Partial answers are allowed when saving, not completing.
+  // Saving allows partial answers.
+  // Summary and completion require every active question.
   if (
     requireAll &&
-    [...visible].some((key) => !answers[key])
+    required.some(
+      (key) => !answers[key]
+    )
   ) {
     invalid(
-      "Answer all visible questions before continuing."
+      "Complete all safety questions."
     );
   }
 
   return answers;
 }
 
+// Preserve existing serious warning restrictions.
+function hasSeriousWarning(answers) {
+  return (
+    answers.identity !== "yes" ||
+    answers.urgency === "yes" ||
+    answers.secrecy === "yes" ||
+
+    (
+      answers.purpose === "shopping" &&
+      answers.disclosed !== "yes"
+    ) ||
+
+    (
+      answers.extraFee === "yes" &&
+      answers.disclosed !== "yes"
+    ) ||
+
+    answers.guaranteedReturns === "yes" ||
+    answers.upfrontFee === "yes" ||
+
+    ["no", "unsure"].includes(
+      answers.purposeKnown
+    ) ||
+
+    ["no", "unsure"].includes(
+      answers.amountConfirmed
+    )
+  );
+}
+
+// Preserve existing draft ID and version validation.
 function parsedReview(body) {
   if (
     !body ||
@@ -161,13 +309,17 @@ function parsedReview(body) {
     draft.version < 1 ||
     draft.version > 2147483647
   ) {
-    invalid("Invalid review identifier or version.");
+    invalid(
+      "Invalid review identifier or version."
+    );
   }
 
   return {
     id: draft.id,
     version: draft.version,
-    payment: paymentFromDraft(draft),
+
+    payment:
+      paymentFromDraft(draft),
   };
 }
 
@@ -175,4 +327,5 @@ module.exports = {
   parsedReview,
   validatedAnswers,
   visibleAnswerIds,
+  hasSeriousWarning,
 };
