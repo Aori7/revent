@@ -47,7 +47,7 @@ import {
 } from "../services/paymentReviewApi";
 
 import "../css/banking-flow.css";
-import "../css/payment-review-popup.css";
+import "../css/payment-review/payment-review-popup.css";
 
 
 // ======================================================

@@ -26,7 +26,7 @@ import {
   getRecipientPaymentHistoryFromApi,
 } from "../services/paymentReviewApi.js";
 
-import "../css/recipient-payment-history.css";
+import "../css/payment-review/recipient-payment-history.css";
 
 export default function RecipientPaymentHistory({
   draft,
