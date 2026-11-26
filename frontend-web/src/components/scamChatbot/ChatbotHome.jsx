@@ -13,7 +13,7 @@ import {
   MessageCircle
 } from "lucide-react";
 
-import RiriIdle from "../../assets/riri/idle.png";
+import RiriIdle from "../../assets/riri/riri-wave.webp";
 import MessageInput from "./MessageInput";
 import ImageUploadNotice from "./ImageUploadNotice";
 import RiriAnalysisCard from "./RiriAnalysisCard";
@@ -192,7 +192,7 @@ onReset,
             />
           </div>
 
-          <h2>Hey, I'm Riri! 👋</h2>
+          <h2>Meep! I'm Riri! 🐾</h2>
           <p>Your little companion for safer banking.</p>
         </div>
 
