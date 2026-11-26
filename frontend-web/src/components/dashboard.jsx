@@ -1,4 +1,4 @@
-
+import WelcomeBanner from "../components/dashboard/WelcomeBanner";
 import "../css/dashboard.css";
 import "../css/everyday-banking.css";
 
@@ -23,14 +23,14 @@ function Dashboard() {
 
   return (
     <main className="dashboard">
-      {/* Welcome */}
-      <section className="dashboard-top">
-        <div className="dashboard-greeting">
-          <div>
-            <h1>Welcome back, Kiki</h1>
-            <p>Here's an overview of your banking activity.</p>
-          </div>
 
+      {/* Full-width welcome banner */}
+      <WelcomeBanner name="Kiki" />
+
+      {/* Padded dashboard content */}
+      <div className="dashboard-content">
+
+        <section className="dashboard-top">
           <div className="dashboard-update">
             <span className="dashboard-current-date">
               {new Date().toLocaleDateString("en-SG", {
@@ -41,39 +41,39 @@ function Dashboard() {
               })}
             </span>
           </div>
+
+          <div className="dashboard-quick-actions">
+            <EverydayBanking />
+          </div>
+        </section>
+
+        {/* Main components for dashboard */}
+        <div className="dashboard-grid">
+          <div className="dashboard-cards">
+            <YourCards />
+          </div>
+
+          <div className="dashboard-account">
+            <AccountCard account={account} />
+          </div>
+
+          <div className="dashboard-transactions">
+            <RecentTransactions />
+          </div>
+
+          <div className="dashboard-security">
+            <SecurityCard />
+          </div>
+
+          <div className="dashboard-rewards">
+            <RewardsCard />
+          </div>
         </div>
 
-        <div className="dashboard-quick-actions">
-          <EverydayBanking />
-        </div>
-      </section>
+        {/* Added by Tiara - Report Suspicious Recipient */}
+        <ReportRecipientCard />
 
-
-
-      {/* Main components for dashboard */}
-      <div className="dashboard-grid">
-        <div className="dashboard-cards">
-          <YourCards />
-        </div>
-
-        <div className="dashboard-account">
-          <AccountCard account={account} />
-        </div>
-
-        <div className="dashboard-transactions">
-          <RecentTransactions />
-        </div>
-
-        <div className="dashboard-security">
-          <SecurityCard />
-        </div>
-
-        <div className="dashboard-rewards">
-          <RewardsCard />
-        </div>
       </div>
-      {/* Added by Tiara - Report Suspicious Recipient */}
-      <ReportRecipientCard />
     </main>
   );
 }
