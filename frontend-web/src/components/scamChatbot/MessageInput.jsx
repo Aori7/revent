@@ -6,24 +6,28 @@ export default function MessageInput({
 }) {
   return (
     <div className="scam-input">
+
       <label htmlFor="scam-message">
-        Suspicious content
+        Message Riri
       </label>
 
       <textarea
         id="scam-message"
         value={message}
-        onChange={(event) => setMessage(event.target.value)}
-        placeholder="Paste a suspicious SMS, email or chat message, or upload an image below..."
-        rows={7}
+        onChange={(event) =>
+          setMessage(event.target.value)
+        }
+        placeholder="Paste a suspicious message or tell me what happened..."
+        rows={4}
         maxLength={5000}
         disabled={disabled}
-        aria-label="Suspicious content"
+        aria-label="Message Riri"
       />
 
       <span className="character-count">
-        {message.length}/5000 characters
+        {message.length}/5000
       </span>
+
     </div>
   );
 }

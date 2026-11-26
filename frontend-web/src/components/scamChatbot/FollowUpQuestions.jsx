@@ -1,4 +1,3 @@
-
 import {
   MessageCircleQuestion,
   ChevronRight,
@@ -17,7 +16,7 @@ export const NO_LINK_QUESTIONS = [
   "How can I verify whether this message is genuine?"
 ];
 
-// Detect links in the original message
+// Detect URLs in the original message
 export function messageContainsLink(message) {
   if (typeof message !== "string") {
     return false;
@@ -26,28 +25,26 @@ export function messageContainsLink(message) {
   return /(?:https?:\/\/|www\.)[^\s]+/i.test(message);
 }
 
-// Choose questions based on the original message
+// Select the appropriate three questions
 export function getFollowUpQuestions(message) {
   return messageContainsLink(message)
     ? FOLLOW_UP_QUESTIONS
     : NO_LINK_QUESTIONS;
 }
 
-// Format IBM's answer into readable paragraphs and steps
+// Format IBM answers
 function formatAnswer(answer) {
   if (typeof answer !== "string" || !answer.trim()) {
     return [];
   }
 
-  const cleaned = answer
+  return answer
     .replace(/\r\n/g, "\n")
     .replace(/\*\*/g, "")
     .replace(/(^|\s)(\d{1,2})\.\s+/g, "\n$2. ")
-    .trim();
-
-  return cleaned
+    .trim()
     .split(/\n+/)
-    .map((line) => line.trim())
+    .map(line => line.trim())
     .filter(Boolean);
 }
 
@@ -64,6 +61,7 @@ export default function FollowUpQuestions({
 
   return (
     <section className="scam-figma-card scam-guidance-panel">
+
       <div className="scam-heading">
         <div className="scam-hero-icon">
           <MessageCircleQuestion size={24} />
@@ -71,7 +69,9 @@ export default function FollowUpQuestions({
 
         <div>
           <h2>Need More Guidance?</h2>
-          <p>Select a follow-up question to learn more.</p>
+          <p>
+            Select a question to learn how to stay safe.
+          </p>
         </div>
       </div>
 
@@ -87,6 +87,7 @@ export default function FollowUpQuestions({
             }
             onClick={() => onSelect(index)}
             disabled={loading}
+            aria-expanded={selectedIndex === index}
           >
             <span>{question}</span>
             <ChevronRight size={18} />
@@ -95,7 +96,10 @@ export default function FollowUpQuestions({
       </div>
 
       {selectedIndex !== null && (
-        <div className="follow-up-answer" aria-live="polite">
+        <div
+          className="follow-up-answer"
+          aria-live="polite"
+        >
           <strong className="follow-up-answer-title">
             {questions[selectedIndex]}
           </strong>
@@ -106,12 +110,14 @@ export default function FollowUpQuestions({
                 size={18}
                 className="follow-up-spinner"
               />
-              <span>Generating your answer...</span>
+              <span>Riri is preparing your answer...</span>
             </div>
+
           ) : error ? (
             <p className="scam-error" role="alert">
               {error}
             </p>
+
           ) : answerLines.length > 0 ? (
             <div
               className="follow-up-answer-content"
@@ -143,7 +149,7 @@ export default function FollowUpQuestions({
                           height: "24px",
                           borderRadius: "50%",
                           backgroundColor: "#FFF1F2",
-                          color: "#DC2626",
+                          color: "#B51C30",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
