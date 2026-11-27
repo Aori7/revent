@@ -1,0 +1,304 @@
+
+/* ========================================
+   1. SCAM AWARENESS CONTAINER
+======================================== */
+
+.sab-wrapper {
+  --sab-background: #ffdf85;
+  --sab-background-light: #fff0b8;
+  --sab-border: #efd078;
+  --sab-text: #392900;
+  --sab-text-secondary: #795600;
+  --sab-count-background: #f5ca61;
+
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  margin: 0 0 28px;
+  padding: 28px 36px;
+
+  background: linear-gradient(
+    115deg,
+    var(--sab-background),
+    var(--sab-background-light)
+  );
+
+  border: 1px solid var(--sab-border);
+  border-radius: 20px;
+  color: var(--sab-text);
+
+  box-shadow: 0 4px 16px rgba(150, 110, 0, 0.08);
+}
+
+.sab-wrapper,
+.sab-wrapper * {
+  box-sizing: border-box;
+}
+
+
+/* ========================================
+   2. SIMPLE SAFETY BANNER
+   Displayed when there are 0–5 reports
+======================================== */
+
+.sab-wrapper.sab-simple-banner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  min-height: 180px;
+  text-align: center;
+  cursor: default;
+}
+
+.sab-simple-banner .sab-banner-title {
+  margin: 0;
+
+  font-size: clamp(26px, 3vw, 40px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -1.2px;
+
+  color: var(--sab-text);
+  text-align: center;
+}
+
+.sab-simple-banner .sab-banner-description {
+  margin: 12px 0 0;
+
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+
+  color: var(--sab-text-secondary);
+  text-align: center;
+}
+
+
+/* ========================================
+   3. ALERT HEADER AND REPORT COUNT
+   Displayed when there are 6+ reports
+======================================== */
+
+.sab-wrapper .sab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sab-wrapper .sab-period {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--sab-text-secondary);
+}
+
+.sab-wrapper .sab-report-count {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 8px 16px;
+  border-radius: 30px;
+
+  background: var(--sab-count-background);
+  color: var(--sab-text);
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* ========================================
+   4. INTERACTIVE SCAM MESSAGE
+======================================== */
+
+.sab-wrapper .sab-message-button {
+  display: grid;
+
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 24px 0;
+
+  border: none;
+  background: transparent;
+  box-shadow: none;
+
+  color: inherit;
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.sab-wrapper .sab-message {
+  grid-area: 1 / 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 140px;
+
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -1.2px;
+
+  color: var(--sab-text);
+  text-align: center;
+  overflow-wrap: anywhere;
+
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+
+/* ========================================
+   5. MESSAGE FADE TRANSITION
+======================================== */
+
+/* Initial message */
+
+.sab-wrapper .sab-front {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Hidden scam category message */
+
+.sab-wrapper .sab-back {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+}
+
+/* Hide initial message */
+
+.sab-wrapper .sab-revealed .sab-front {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* Reveal scam category message */
+
+.sab-wrapper .sab-revealed .sab-back {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* ========================================
+   6. FOOTER AND DASHBOARD LINK
+======================================== */
+
+.sab-wrapper .sab-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sab-wrapper .sab-source {
+  font-size: 12px;
+  color: var(--sab-text-secondary);
+}
+
+.sab-wrapper .sab-details-link {
+  color: var(--sab-text);
+
+  font-size: 14px;
+  font-weight: 600;
+
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+
+/* ========================================
+   7. KEYBOARD ACCESSIBILITY
+======================================== */
+
+.sab-wrapper .sab-message-button:focus-visible,
+.sab-wrapper .sab-details-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+
+/* ========================================
+   8. MOBILE RESPONSIVENESS
+======================================== */
+
+@media (max-width: 600px) {
+  .sab-wrapper {
+    padding: 22px 20px;
+    margin-bottom: 20px;
+    border-radius: 16px;
+  }
+
+  /* Simple banner */
+
+  .sab-wrapper.sab-simple-banner {
+    min-height: 160px;
+  }
+
+  .sab-simple-banner .sab-banner-title {
+    font-size: 28px;
+    letter-spacing: -0.6px;
+  }
+
+  .sab-simple-banner .sab-banner-description {
+    font-size: 13px;
+  }
+
+  /* Interactive message */
+
+  .sab-wrapper .sab-message-button {
+    padding: 14px 0;
+  }
+
+  .sab-wrapper .sab-message {
+    min-height: 120px;
+    font-size: 30px;
+    letter-spacing: -0.6px;
+  }
+
+  /* Report information */
+
+  .sab-wrapper .sab-report-count {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .sab-wrapper .sab-details-link {
+    font-size: 12px;
+  }
+}
+
+
+/* ========================================
+   9. REDUCED MOTION ACCESSIBILITY
+======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .sab-wrapper .sab-message {
+    transition: none;
+  }
+
+  .sab-wrapper .sab-front,
+  .sab-wrapper .sab-back,
+  .sab-wrapper .sab-revealed .sab-front,
+  .sab-wrapper .sab-revealed .sab-back {
+    transform: none;
+  }
+}

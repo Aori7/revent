@@ -14,6 +14,8 @@ import RewardsCard from "./dashboard/RewardsCard";
 // Added by Tiara - Report Suspicious Recipient
 import ReportRecipientCard from "./dashboard/ReportRecipientCard";
 
+import ScamAwarenessBubble from "../pages/dashboard/ScamAwarenessBubble";
+
 function Dashboard() {
   const [account, setAccount] = useState(null);
 
@@ -126,6 +128,8 @@ function Dashboard() {
 
         </section>
 
+        <ScamAwarenessBubble />
+
         {/* Main components for dashboard */}
         <div className="dashboard-grid">
 
@@ -191,6 +195,7 @@ function Dashboard() {
 
         </div>
 
+         
         {/* Added by Tiara - Report Suspicious Recipient */}
         <ReportRecipientCard />
 
