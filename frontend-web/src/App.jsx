@@ -14,6 +14,7 @@ import Dashboard from "./components/dashboard";
 import MobileNavbar from "./components/MobileNavbar";
 
 import ReportSuspiciousRecipient from "./pages/ReportSuspiciousRecipient"; // added by tiara
+import ScamAwarenessDashboard from "./pages/dashboard/ScamAwarenessDashboard";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -231,6 +232,10 @@ export default function App() {
             <Route
               path="/report-suspicious-recipient"
               element={<ReportSuspiciousRecipient />}
+            />
+            <Route
+              path="/scam-awareness"
+              element={<ScamAwarenessDashboard />}
             />
 
             {/* Sprint 2: Check trusted recipient history
